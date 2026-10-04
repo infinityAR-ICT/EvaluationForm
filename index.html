@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>40 Section Assessment Form</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+:root{--primary:#2563eb;--bg:#f4f7fb;--card:#fff;--text:#172033;--muted:#64748b}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+.container{max-width:1000px;margin:auto;padding:22px}
+header{background:#fff;border-radius:16px;padding:24px;margin-bottom:18px;box-shadow:0 4px 18px #0000000d}
+h1{margin:0 0 8px;font-size:28px}
+.subtitle{color:var(--muted)}
+.section{background:var(--card);border-radius:16px;padding:22px;margin:18px 0;box-shadow:0 4px 18px #0000000d}
+.section-title{font-size:20px;font-weight:700;margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid #e8edf5}
+.question{padding:16px 0;border-bottom:1px solid #edf1f6}
+.question:last-child{border-bottom:0}
+.qtext{font-weight:600;margin-bottom:12px}
+.options{display:flex;gap:10px;flex-wrap:wrap}
+.option{border:1px solid #d7deea;border-radius:10px;padding:10px 14px;cursor:pointer;background:#fff}
+.option:hover{border-color:var(--primary)}
+.option input{margin-right:7px}
+.comment-wrap{display:none;margin-top:12px}
+.comment-wrap.show{display:block}
+.comment{width:100%;min-height:75px;border:1px solid #cfd8e6;border-radius:10px;padding:10px;resize:vertical;font:inherit}
+.actions{position:sticky;bottom:0;background:#ffffffee;backdrop-filter:blur(8px);padding:14px 0;display:flex;gap:10px;justify-content:center;border-top:1px solid #e5eaf2}
+button{border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer}
+.primary{background:var(--primary);color:white}
+.secondary{background:#e8eef8;color:#172033}
+.progress{height:8px;background:#e6ebf3;border-radius:99px;overflow:hidden;margin-top:15px}
+.progress-bar{height:100%;width:0;background:var(--primary);transition:.2s}
+.note{font-size:13px;color:var(--muted);margin-top:10px}
+
+.section { display:none; }
+.section.active { display:block; }
+.navigation {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  margin:18px 0 80px;
+}
+.navigation button { min-width:120px; }
+.navigation .next { margin-left:auto; }
+.section-indicator {
+  font-weight:700;
+  margin-top:8px;
+  color:#2563eb;
+}
+
+@media(max-width:600px){.container{padding:12px}.section{padding:16px}h1{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <h1>40-Section Assessment Form</h1>
+  <div class="subtitle">40 sections × 4 questions = 160 questions</div>
+  <div class="progress"><div id="progressBar" class="progress-bar"></div></div>
+  <div id="progressText" class="note">0 of 160 questions answered</div>
+<div id="sectionIndicator" class="section-indicator">Section 1 of 40</div>
+</header>
+
+<form id="assessmentForm"></form>
+
+<div class="navigation">
+  <button type="button" class="secondary" id="prevBtn" onclick="previousSection()">Previous</button>
+  <button type="button" class="primary next" id="nextBtn" onclick="nextSection()">Next</button>
+</div>
+
+<div class="actions">
+  <button type="button" class="secondary" onclick="clearForm()">Clear Form</button>
+  <button type="button" class="primary" onclick="exportExcel()">Save / Export to Excel</button>
+</div>
+</div>
+
+<script>
+const OPTIONS = ["Option 1", "Option 2", "Option 3", "Option 4"];
+const SECTIONS = 40;
+const QUESTIONS_PER_SECTION = 4;
+
+function buildForm(){
+  const form = document.getElementById("assessmentForm");
+  let html = "";
+  for(let s=1;s<=SECTIONS;s++){
+    html += `<section class="section">
+      <div class="section-title">Section ${s}</div>`;
+    for(let q=1;q<=QUESTIONS_PER_SECTION;q++){
+      const id = `s${s}q${q}`;
+      html += `<div class="question">
+        <div class="qtext">Question ${q}: Enter your question here.</div>
+        <div class="options">`;
+      OPTIONS.forEach((op,i)=>{
+        const isFourth = i === 3;
+        html += `<label class="option">
+          <input type="radio" name="${id}" value="${op}" onchange="${isFourth ? `showComment('${id}')` : `hideComment('${id}')`}"> ${op}
+        </label>`;
+      });
+      html += `</div>
+        <div id="${id}-comment-wrap" class="comment-wrap">
+          <textarea id="${id}-comment" class="comment" placeholder="Enter comment..."></textarea>
+        </div>
+      </div>`;
+    }
+    html += `</section>`;
+  }
+  form.innerHTML = html;
+  showSection(1);
+  document.querySelectorAll('input[type=radio]').forEach(el => el.addEventListener('change', updateProgress));
+}
+
+function showComment(id){
+  document.getElementById(id+"-comment-wrap").classList.add("show");
+}
+function hideComment(id){
+  document.getElementById(id+"-comment-wrap").classList.remove("show");
+  document.getElementById(id+"-comment").value = "";
+}
+
+function updateProgress(){
+  const total = SECTIONS*QUESTIONS_PER_SECTION;
+  let answered=0;
+  for(let s=1;s<=SECTIONS;s++){
+    for(let q=1;q<=QUESTIONS_PER_SECTION;q++){
+      if(document.querySelector(`input[name="s${s}q${q}"]:checked`)) answered++;
+    }
+  }
+  document.getElementById("progressText").textContent = `${answered} of ${total} questions answered`;
+  document.getElementById("progressBar").style.width = `${answered/total*100}%`;
+}
+
+function exportExcel(){
+  const wb = XLSX.utils.book_new();
+
+  for(let s=1;s<=SECTIONS;s++){
+    const rows = [];
+    rows.push(["Question", "Selected Option", "Comment"]);
+
+    for(let q=1;q<=QUESTIONS_PER_SECTION;q++){
+      const id=`s${s}q${q}`;
+      const selected=document.querySelector(`input[name="${id}"]:checked`);
+      const comment=document.getElementById(`${id}-comment`).value;
+
+      rows.push([
+        `Question ${q}: Enter your question here.`,
+        selected ? selected.value : "",
+        comment
+      ]);
+    }
+
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws["!cols"] = [{wch:42},{wch:20},{wch:55}];
+    XLSX.utils.book_append_sheet(wb, ws, `Section ${s}`);
+  }
+
+  XLSX.writeFile(wb,"assessment_responses_40_sections.xlsx");
+}
+let currentSection = 1;
+
+function showSection(sectionNumber){
+  currentSection = sectionNumber;
+
+  document.querySelectorAll(".section").forEach((section, index)=>{
+    section.classList.toggle("active", index + 1 === currentSection);
+  });
+
+  document.getElementById("sectionIndicator").textContent =
+    `Section ${currentSection} of ${SECTIONS}`;
+
+  document.getElementById("prevBtn").disabled = currentSection === 1;
+
+  const nextBtn = document.getElementById("nextBtn");
+  if(currentSection === SECTIONS){
+    nextBtn.textContent = "Finish";
+    nextBtn.onclick = exportExcel;
+  } else {
+    nextBtn.textContent = "Next";
+    nextBtn.onclick = nextSection;
+  }
+
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function currentSectionComplete(){
+  for(let q=1;q<=QUESTIONS_PER_SECTION;q++){
+    if(!document.querySelector(`input[name="s${currentSection}q${q}"]:checked`)){
+      return false;
+    }
+  }
+  return true;
+}
+
+function nextSection(){
+  if(!currentSectionComplete()){
+    alert("Please select an option for all 4 questions before going to the next section.");
+    return;
+  }
+
+  if(currentSection < SECTIONS){
+    showSection(currentSection + 1);
+  }
+}
+
+function previousSection(){
+  if(currentSection > 1){
+    showSection(currentSection - 1);
+  }
+}
+
+function clearForm(){
+  if(!confirm("Clear all answers and comments?")) return;
+  document.getElementById("assessmentForm").reset();
+  document.querySelectorAll(".comment-wrap").forEach(x=>x.classList.remove("show"));
+  updateProgress();
+  showSection(1);
+}
+
+buildForm();
+</script>
+</body>
+</html>
