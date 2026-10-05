@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>40 Section Assessment Form</title>
+<title>Assessment Form</title>
 <style>
 :root{--primary:#2563eb;--bg:#f4f7fb;--card:#fff;--text:#172033;--muted:#64748b}
 *{box-sizing:border-box}
@@ -76,7 +76,7 @@ button{border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:poin
 </div>
 
 <script>
-const OPTIONS = ["Option 1", "Option 2", "Option 3", "Option 4"];
+const OPTIONS = ["Excellent", "Good", "Fair", "Poor"];
 const SECTIONS = 40;
 const QUESTIONS_PER_SECTION = 4;
 const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw6BfZIr6yXmvrF_rjkmrrUBguC-klKwnGAcxpjXgxP73xkuzUu7sLnQDIr5l4gLp8A/exec"
@@ -173,7 +173,7 @@ async function saveToGoogleSheet(){
       headers: {"Content-Type":"text/plain;charset=utf-8"},
       body: JSON.stringify({answers:collectAnswers()})
     });
-    setSaveStatus("Submission sent. The browser cannot confirm the Apps Script result; check the Google Sheet to verify it was added.");
+    setSaveStatus("Submission sent.Thank you for completing the assessment!");
   } catch(error){
     setSaveStatus(`Could not send responses: ${error.message}`, true);
   } finally{
