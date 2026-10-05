@@ -16,28 +16,58 @@ function doPost(e) {
     const submissionId = Utilities.getUuid();
     const answersBySection = Array.from({length: SECTION_COUNT}, () => []);
     answers.forEach(answer => answersBySection[answer.section - 1].push(answer));
+    const sections = [];
 
     for (let section = 1; section <= SECTION_COUNT; section++) {
       const sheetName = `Section ${section}`;
       const sheet = spreadsheet.getSheetByName(sheetName)
         || spreadsheet.insertSheet(sheetName);
       const headers = buildHeaders();
+      const isEmpty = sheet.getLastRow() === 0;
 
-      if (sheet.getLastRow() === 0) {
-        sheet.appendRow(headers);
-      } else {
-        const existingHeaders = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
+      if (!isEmpty) {
+        const existingHeaders = sheet.getRange(4, 1, 1, headers.length).getValues()[0];
         if (headers.some((header, index) => existingHeaders[index] !== header)) {
           throw new Error(`Unexpected headers in ${sheetName}.`);
         }
       }
 
-      const row = [submittedAt, submissionId];
-      answersBySection[section - 1].forEach(answer => {
+      sections.push({
+        sheet: sheet,
+        sectionNumber: section,
+        sheetName: sheetName,
+        headers: headers,
+        isEmpty: isEmpty
+      });
+    }
+
+    sections.forEach(section => {
+      const sheet = section.sheet;
+      if (section.isEmpty) {
+        sheet.getRange(2, 4).setValue(section.sheetName);
+        sheet.getRange(2, 4, 1, 6).merge();
+        sheet.getRange(4, 1, 1, section.headers.length).setValues([section.headers]);
+      } else if (!sheet.getRange(2, 4).getValue()) {
+        sheet.getRange(2, 4).setValue(section.sheetName);
+        sheet.getRange(2, 4, 1, 6).merge();
+      }
+      sheet.getRange(2, 4, 1, 6)
+        .setFontWeight("bold")
+        .setHorizontalAlignment("center");
+      sheet.getRange(4, 1, 1, section.headers.length)
+        .setFontWeight("bold")
+        .setHorizontalAlignment("center")
+        .setVerticalAlignment("middle")
+        .setWrap(true);
+      sheet.setFrozenRows(4);
+
+      const rowNumber = sheet.getLastRow() + 1;
+      const row = [rowNumber - 4, submittedAt, submissionId];
+      answersBySection[section.sectionNumber - 1].forEach(answer => {
         row.push(answer.selectedOption, safeCellText(answer.comment));
       });
-      sheet.getRange(sheet.getLastRow() + 1, 1, 1, row.length).setValues([row]);
-    }
+      sheet.getRange(rowNumber, 1, 1, row.length).setValues([row]);
+    });
 
     SpreadsheetApp.flush();
     return jsonResponse({
@@ -55,9 +85,9 @@ function doPost(e) {
 }
 
 function buildHeaders() {
-  const headers = ["Submitted At", "Submission ID"];
+  const headers = ["No", "Submit on", "Id"];
   for (let question = 1; question <= QUESTIONS_PER_SECTION; question++) {
-    headers.push(`Question ${question} - Selected Option`, `Question ${question} - Comment`);
+    headers.push(`Question ${question}: Response`, "Comment");
   }
   return headers;
 }

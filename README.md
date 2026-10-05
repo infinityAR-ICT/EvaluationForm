@@ -9,7 +9,9 @@ Evaluation form for teachers. The **Save Responses** button sends all 160 questi
 3. In Apps Script, choose **Deploy → Manage deployments**. Edit the web app deployment, choose **New version**, and deploy it. If you have not deployed it before, choose **Deploy → New deployment → Web app** instead.
 4. Set **Execute as** to your account and **Who has access** to **Anyone**, then deploy and complete Google's authorization prompts. This lets respondents submit without signing in; the script writes using the deploying account's spreadsheet access.
 5. Keep the existing `/exec` web app URL if updating a deployment. If creating a new deployment, copy its `/exec` URL and update `GOOGLE_SHEETS_WEB_APP_URL` in `index.html`. Publish the updated form if you changed the URL.
-6. Submit a response and check the spreadsheet. The script creates 40 tabs named `Section 1` through `Section 40`, each with a header row. Every form submission adds exactly one row to each section tab. Each row contains a timestamp, submission ID, and the four selected options and comments for that section.
+6. Submit a response and check the spreadsheet. The script creates 40 tabs named `Section 1` through `Section 40`, matching the supplied workbook layout: the section title is merged across D2:I2, headers are on row 4 (`No`, `Submit on`, `Id`, then each question's `Response` and `Comment` columns), and each submission adds exactly one row per section starting at row 5.
+
+Each row contains a per-section response number, timestamp, submission ID, and the four selected options and comments for that section. Deploy the updated Apps Script code before testing; an old deployment will keep writing in its old format.
 
 Older rows in the previous `Responses` tab are not moved or deleted. They can be removed manually after confirming you no longer need them.
 
