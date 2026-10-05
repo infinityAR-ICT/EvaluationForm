@@ -183,7 +183,8 @@ const QUESTION_TEXTS = [
   "4. Personality & Behaviour"
 ];
 const QUESTIONS_PER_SECTION = QUESTION_TEXTS.length;
-const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzSZgd2AIym4NnukvXE6Ur0vEM6R6z0H85alDa3mVVmv6PstUx73BTozId8OTEYm4Ql/exec"
+const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyk1SLXGoLjAlSyAH7j3nkPcJctUXtM0PKanPx9LMvLWiXioL9uWxsyE9HHQMA3hh5D/exec";
+const COLLEGE_GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzM-SQjl1XCv2opq99PFHOfrUubij5JY6cuKI5AiRMJCPYLLTNX69buqO8S8PdJuzS3/exec";
 const SECTION_PHOTOS = [
   "1. MRS. JAMUNA RANI BISWAS.jpg",
   "2. MD. TAUFIQUL ALAM.jpg",
@@ -426,7 +427,11 @@ function setSaveStatus(message, isError=false){
 
 async function saveToGoogleSheet(){
   if(submissionInProgress) return;
-  if(GOOGLE_SHEETS_WEB_APP_URL === "YOUR_APPS_SCRIPT_WEB_APP_URL"){
+  const webAppUrl = selectedEvaluationType === "college"
+    ? COLLEGE_GOOGLE_SHEETS_WEB_APP_URL
+    : GOOGLE_SHEETS_WEB_APP_URL;
+  if(webAppUrl === "YOUR_APPS_SCRIPT_WEB_APP_URL"
+    || webAppUrl === "YOUR_COLLEGE_APPS_SCRIPT_WEB_APP_URL"){
     setSaveStatus("Google Sheets saving is not configured yet. Follow the setup steps in README.md.", true);
     return;
   }
@@ -434,7 +439,7 @@ async function saveToGoogleSheet(){
   submissionInProgress = true;
   setSaveStatus("Sending responses to Google Sheets...");
   try{
-    await fetch(GOOGLE_SHEETS_WEB_APP_URL, {
+    await fetch(webAppUrl, {
       method: "POST",
       mode: "no-cors",
       headers: {"Content-Type":"text/plain;charset=utf-8"},
