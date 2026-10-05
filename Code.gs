@@ -1,6 +1,6 @@
 const SPREADSHEET_ID = "12UGu3FmqVhGbjwCyJUiR4owIqwU6klFNB0yzU1SRH-w";
 const OPTIONS = ["Option 1", "Option 2", "Option 3", "Option 4"];
-const SECTION_COUNT = 40;
+const SECTION_COUNT = 30;
 const QUESTIONS_PER_SECTION = 4;
 const MAX_COMMENT_LENGTH = 45000;
 const VALID_CLASSES = ["VII", "VIII", "IX", "X", "XI", "XII"];
@@ -11,46 +11,36 @@ const VALID_HOUSES = [
 ];
 const VALID_FORMS = ["A", "B"];
 const SECTION_PHOTO_FILES = [
-  "1. Md. Nazrul Islam.jpg",
-  "10. Muhammad Shahab Uddin.jpg",
-  "11. Mukti Rani Modak.JPG",
-  "12. Syed Selimuzzaman.JPG",
-  "13. Muhammad Abul Kalam Azad.jpg",
-  "14. Md. Mohiuddin Khan.jpg",
-  "15. Safina Rahat.jpg",
-  "16. Arif sir.jpg",
-  "17. Nazmus Shahid Sir.jpg",
-  "2. Lt. Col. Tahsin Salehin.jpg",
-  "2. Vice Principal.jpg",
-  "25. Md. Matiur Rahman.jpg",
-  "26. Abu Nayeem Mohammad Ekram.JPG",
-  "27. Joydev Mondal.JPG",
-  "28. Metun Mondol.jpg",
-  "29. Mohsin Emran.jpg",
-  "3. Adjutant Major Ali.jpg",
-  "3. Jamuna Madam.jpg",
-  "3. MO-Rashed.jpg",
-  "33. Nazim Al Hasan.jpg",
-  "34. Mst. Taskia.jpg",
-  "35. Jannatul Ferdous.jpg",
-  "4. Md. Taufiqul Alam.jpg",
-  "5. Md. Tareekul Haq.jpg",
-  "6. Pradipta Sir.jpg",
-  "7. Md. Mahbubul Alam.jpg",
-  "8. Mes. Asmaul Mahmuda Taslima.jpg",
-  "9. Md. Main Uddin Khan.JPG",
-  "AO.jpg",
-  "Ibrahim Molla.jpg",
-  "Indrajit Kundu.jpg",
-  "Md Iftekhar Alam.jpg",
-  "Mumin Bhai.jpg",
-  "Munni Madam.jpg",
-  "Nazim Al Hasan.jpg",
-  "Nazmul Hasan.jpg",
-  "Nazrul sir.jpg",
-  "Sazzadur Rahman.jpg",
-  "AO.jpg",
-  "Ibrahim Molla.jpg"
+  "1. MRS. JAMUNA RANI BISWAS.jpg",
+  "2. MD. TAUFIQUL ALAM.jpg",
+  "3. MD. TAREEKUL HAQ.jpg",
+  "4. MR. PRODIPTA KUMAR.jpg",
+  "5. MD. MAHBUBUL ALAM.jpg",
+  "6. MRS. ASMA-UL- MAHMUDA TASLIMA.jpg",
+  "7. MD. MAIN UDDIN KHAN.JPG",
+  "8. MR. MUHAMMAD SHAHAB UDDIN.jpg",
+  "9. MRS. MUKTI RANI MODAK.JPG",
+  "10. MR. SYED SELIMUZZAMAN.JPG",
+  "11. MRS. SHAFINA RAHAT .jpg",
+  "12. MUHAMMD ABUL KALAM AZAD.jpg",
+  "13. MD. MOHIUDDIN KHAN.jpg",
+  "14. MD. ARIF KHAN .jpg",
+  "15.  MD. NAZMUS SHAHID.jpg",
+  "16. MISS MUNNI.jpg",
+  "17. MD. NAZRUL ISLAM.jpg",
+  "18. MD. MATIUR RAHMAN.jpg",
+  "19. MR. INDRAJIT KUNDU.jpg",
+  "20. MR. ABU NAYEEM MOHAMMAD EKRAM.JPG",
+  "21. MR. JOYDEV MONDAL.JPG",
+  "22. MR. METUN MONDOL.jpg",
+  "23. MD. ABDUL MOMIN.jpg",
+  "24. MR. MOHSIN EMRAN.jpg",
+  "25. MR.NAZMUL HASAN.jpg",
+  "26. MR. SAZZADUR RAHMAN .jpg",
+  "27. MR.  NAZIM AL HASAN.jpg",
+  "28. MRS. TASKIA.jpg",
+  "29. MST. JANNATUN  FERDOUS.jpg",
+  "30. MD. IBRAHIM MOLLA.jpg"
 ];
 
 function getSectionSheetNames() {
