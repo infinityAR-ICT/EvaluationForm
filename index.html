@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Teacher's Evaluation Form</title>
+<title>BCC Evaluation Form</title>
 <link rel="icon" type="image/png" href="icon/bcc.png">
 <style>
 :root{color-scheme:light;--primary:#2563eb;--bg:#f4f7fb;--card:#fff;--text:#172033;--muted:#64748b;--border:#e8edf5;--field-border:#cfd8e6;--field-bg:#fff;--option-bg:#fff;--secondary-bg:#e8eef8;--secondary-text:#172033;--progress-bg:#e6ebf3;--photo-bg:#f8fafc;--shadow:0 4px 18px #0000000d}
@@ -16,6 +16,35 @@ header{background:var(--card);border-radius:16px;padding:24px;margin-bottom:18px
 .header-brand{display:flex;align-items:center;gap:16px}
 .school-logo{width:68px;height:68px;object-fit:contain;flex-shrink:0}
 h1{margin:0 0 8px;font-size:28px}
+body.cadet-details-page .header-top{justify-content:center;position:relative}
+body.cadet-details-page .header-brand{justify-content:center;text-align:center}
+body.cadet-details-page .header-brand > div{text-align:center}
+body.cadet-details-page .theme-toggle{position:absolute;right:0}
+body.cadet-details-page .header-brand .school-link{position:absolute;left:0}
+body.cadet-details-page .header-brand .school-logo{display:block}
+body.cadet-details-page .section-indicator{text-align:center}
+body.evaluation-choice-page .header-top{justify-content:center;position:relative}
+body.evaluation-choice-page .header-brand{justify-content:center;text-align:center}
+body.evaluation-choice-page .header-brand > div{text-align:center}
+body.evaluation-choice-page .theme-toggle{position:absolute;right:0}
+body.evaluation-choice-page .header-brand .school-link{position:absolute;left:0}
+body.evaluation-choice-page .header-brand .school-logo{display:block}
+body.evaluation-choice-page .section-indicator{text-align:center}
+body.college-evaluation-page .header-top{justify-content:center;position:relative}
+body.college-evaluation-page .header-brand{justify-content:center;text-align:center}
+body.college-evaluation-page .header-brand > div{text-align:center}
+body.college-evaluation-page .theme-toggle{position:absolute;right:0}
+body.college-evaluation-page .header-brand .school-link{position:absolute;left:0}
+body.college-evaluation-page .header-brand .school-logo{display:block}
+body.college-evaluation-page #assessmentForm .section.active > .section-title{text-align:center}
+body.college-evaluation-page .section-indicator{text-align:center}
+body.teacher-evaluation-page .header-top{justify-content:center;position:relative}
+body.teacher-evaluation-page .header-brand{justify-content:center;text-align:center}
+body.teacher-evaluation-page .header-brand > div{text-align:center}
+body.teacher-evaluation-page .theme-toggle{position:absolute;right:0}
+body.teacher-evaluation-page .header-brand .school-link{position:absolute;left:0}
+body.teacher-evaluation-page .header-brand .school-logo{display:block}
+body.teacher-evaluation-page .section-indicator{text-align:center}
 .subtitle{color:var(--muted)}
 .section{background:var(--card);border-radius:16px;padding:22px;margin:18px 0;box-shadow:var(--shadow)}
 .section-header{display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--border);padding-bottom:12px;margin-bottom:18px;flex-wrap:wrap}
@@ -23,6 +52,8 @@ h1{margin:0 0 8px;font-size:28px}
 .person-photo{width:72px;height:72px;object-fit:cover;border-radius:50%;border:2px solid var(--border);background:var(--photo-bg)}
 .person-meta{display:flex;flex-direction:column;gap:4px}
 .section-title{font-size:20px;font-weight:700}
+#assessmentForm .section.active:first-child > .section-title{text-align:center}
+body.evaluation-choice-page #assessmentForm .section.active > .section-title{text-align:center}
 .person-name{font-size:16px;color:var(--muted);font-weight:600}
 .student-details{display:flex;gap:16px;flex-wrap:wrap;margin:0 0 20px}
 .class-field{flex:1 1 240px}
@@ -36,10 +67,16 @@ h1{margin:0 0 8px;font-size:28px}
 .option{border:1px solid var(--field-border);border-radius:10px;padding:10px 14px;cursor:pointer;background:var(--option-bg)}
 .option:hover{border-color:var(--primary)}
 .option input{margin-right:7px}
+.evaluation-options{display:grid;grid-template-columns:repeat(2,minmax(0,200px));justify-content:center;gap:12px}
+.evaluation-choice{width:100%;min-height:44px;border:1px solid var(--field-border);border-radius:14px;background:var(--option-bg);color:var(--text);font:inherit;font-size:17px;font-weight:700;padding:8px;box-shadow:var(--shadow)}
+.evaluation-choice:hover{border-color:var(--primary);transform:translateY(-2px)}
+.college-answer{width:100%;min-height:120px;border:1px solid var(--field-border);border-radius:10px;padding:12px;background:var(--field-bg);color:var(--text);font:inherit;resize:vertical}
 .comment-wrap{display:none;margin-top:12px}
 .comment-wrap.show{display:block}
 .comment{width:100%;min-height:75px;border:1px solid var(--field-border);border-radius:10px;padding:10px;resize:vertical;background:var(--field-bg);color:var(--text);font:inherit}
-.actions{position:sticky;bottom:0;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(8px);padding:14px 0;display:flex;gap:10px;justify-content:center;border-top:1px solid var(--border)}
+.actions{position:sticky;bottom:0;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(8px);padding:14px 0;display:flex;flex-direction:column;align-items:center;gap:10px;justify-content:center;border-top:1px solid var(--border)}
+.actions[hidden]{display:none}
+.actions-credit{color:var(--muted);font-size:13px;text-align:center}
 button{border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer}
 .primary{background:var(--primary);color:white}
 .secondary{background:var(--secondary-bg);color:var(--secondary-text)}
@@ -51,6 +88,7 @@ button{border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:poin
 .thank-you-icon{font-size:48px;color:var(--primary);margin-bottom:12px}
 .thank-you h2{margin:0 0 10px}
 .thank-you p{color:var(--muted);margin:0}
+.thank-you .other-evaluation-button{margin-top:24px}
 button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
 
 .section { display:none; }
@@ -69,7 +107,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
   color:#2563eb;
 }
 
-@media(max-width:600px){.container{padding:12px}.section{padding:16px}h1{font-size:23px}.header-top{align-items:center}.header-brand{gap:10px}.school-logo{width:52px;height:52px}}
+@media(max-width:600px){.container{padding:12px}.section{padding:16px}h1{font-size:23px}.header-top{align-items:center}.header-brand{gap:10px}.school-logo{width:52px;height:52px}.actions-credit{font-size:11px}}
 </style>
 </head>
 <body>
@@ -77,10 +115,11 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 <header>
   <div class="header-top">
     <div class="header-brand">
-      <img class="school-logo" src="icon/bcc.png" alt="Barishal Cadet College emblem">
+      <a class="school-link" href="https://infinityar-ict.github.io/EvaluationForm/" target="_blank" rel="noopener noreferrer" aria-label="Visit the evaluation form website">
+        <img class="school-logo" src="icon/bcc.png" alt="Barishal Cadet College emblem">
+      </a>
       <div>
-      <h1>Teacher's Evaluation Form</h1>
-      <div class="subtitle">30 sections × 4 questions = 120 questions</div>
+        <h1 id="formTitle">BCC Evaluation Form</h1>
       </div>
     </div>
     <button type="button" id="themeToggle" class="secondary theme-toggle" aria-label="Enable dark mode" title="Enable dark mode" aria-pressed="false" onclick="toggleTheme()">
@@ -104,6 +143,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 
 <div class="actions">
   <button type="button" class="secondary" onclick="clearForm()">Clear Form</button>
+  <span class="actions-credit">@ICT Dept., Barishal Cadet College</span>
 </div>
 <div id="saveStatus" class="note" role="status" aria-live="polite" style="text-align:center"></div>
 </div>
@@ -112,12 +152,30 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
   <div class="thank-you-icon" aria-hidden="true">✓</div>
   <h2 id="thankYouHeading" tabindex="-1">Thank you!</h2>
   <p>Your evaluation has been sent. Thank you for completing the assessment.</p>
+  <button type="button" id="otherEvaluationButton" class="primary other-evaluation-button" onclick="startOtherEvaluation()"></button>
 </section>
 </div>
 
 <script>
 const OPTIONS = ["Excellent", "Standard", "Good", "Satisfactory", "Poor", ];
+const OPTION_EMOJIS = {
+  Excellent: "🌟",
+  Standard: "⭐",
+  Good: "👍",
+  Satisfactory: "👌",
+  Poor: "👎"
+};
 const SECTIONS = 30;
+const COLLEGE_RATING_QUESTIONS = [
+  {number: 1, key: "environmentRating", text: "How is the current college environment for supporting everyone's personal development?"},
+  {number: 3, key: "educationDevelopmentRating", text: "How effective are the overall measures taken for the development of education?"},
+  {number: 4, key: "diningQualityRating", text: "How is the quality of cadet dining and food?"},
+  {number: 5, key: "houseEnvironmentRating", text: "How is the current environment of the house?"},
+  {number: 6, key: "formMasterSincerityRating", text: "How is the sincerity of the form master?"},
+  {number: 7, key: "houseMasterDedicationRating", text: "How is the sincerity and dedication of the house master?"},
+  {number: 8, key: "hospitalFacilitiesRating", text: "How are the hospital facilities and environment?"},
+  {number: 9, key: "collegeAdjutantSincerityRating", text: "How sincere is the college adjutant?"}
+];
 const QUESTION_TEXTS = [
   "1. Subject Knowledge",
   "2. Teaching Skill",
@@ -125,7 +183,7 @@ const QUESTION_TEXTS = [
   "4. Personality & Behaviour"
 ];
 const QUESTIONS_PER_SECTION = QUESTION_TEXTS.length;
-const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwSTdp8xsDIwJIvmtYkiszPrVX8Az-IHPgRo1lg-SYyDHhL5DJg9JMhDkpJ_Dm1Ht8J/exec"
+const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwnEk7lO-1bHRxKcGhMbnvssF6-F7o2UlC6RXxC_XQg-R_RSQF-F7l2g7INJaEWTuI/exec"
 const SECTION_PHOTOS = [
   "1. MRS. JAMUNA RANI BISWAS.jpg",
   "2. MD. TAUFIQUL ALAM.jpg",
@@ -202,12 +260,19 @@ function buildForm(){
       </div>
       <div class="class-field">
         <label for="cadetName">Cadet Name</label>
-        <input id="cadetName" name="cadetName" type="text" maxlength="200">
+        <input id="cadetName" name="cadetName" type="text" maxlength="200" autocomplete="name" title="Enter letters and spaces only.">
       </div>
       <div class="class-field">
         <label for="cadetNumber">Cadet Number</label>
-        <input id="cadetNumber" name="cadetNumber" type="text" maxlength="100">
+        <input id="cadetNumber" name="cadetNumber" type="text" maxlength="100" inputmode="numeric" pattern="[0-9]*" title="Enter digits only.">
       </div>
+    </div>
+  </section>
+  <section class="section">
+    <div class="section-title">Choose Evaluation</div>
+    <div class="evaluation-options">
+      <button type="button" class="evaluation-choice" onclick="startEvaluation('college')">College Evaluation</button>
+      <button type="button" class="evaluation-choice" onclick="startEvaluation('teacher')">Teacher's Evaluation</button>
     </div>
   </section>`;
   for(let s=1;s<=SECTIONS;s++){
@@ -229,7 +294,7 @@ function buildForm(){
         <div class="options">`;
       OPTIONS.forEach((op,i)=>{
         html += `<label class="option">
-          <input type="radio" name="${id}" value="${op}" onchange="toggleCommentState('${id}', this.value)"> ${op}
+          <input type="radio" name="${id}" value="${op}" required onchange="toggleCommentState('${id}', this.value)"> ${OPTION_EMOJIS[op]} ${op}
         </label>`;
       });
       html += `</div>
@@ -240,7 +305,38 @@ function buildForm(){
     }
     html += `</section>`;
   }
+  html += `<section class="section">`;
+  COLLEGE_RATING_QUESTIONS.forEach(question => {
+    html += `<div class="question">
+      <div class="qtext">${question.number}. ${question.text}</div>
+      <div class="options">`;
+    OPTIONS.forEach(option => {
+      html += `<label class="option">
+        <input type="radio" name="college-${question.key}" value="${option}" required onchange="toggleCollegeComment('${question.key}', this.value)"> ${OPTION_EMOJIS[option]} ${option}
+      </label>`;
+    });
+    html += `</div>
+      <div id="college-${question.key}-comment-wrap" class="comment-wrap">
+        <textarea id="college-${question.key}-comment" class="comment" placeholder="Please explain your rating..." required></textarea>
+      </div>
+    </div>`;
+    if(question.number === 1){
+      html += `<div class="question">
+        <label class="qtext" for="collegeMissionDescription">2. Is Barishal Cadet College directed towards a well-defined mission or purpose? From your perspective, describe that objective in one or more sentences.</label>
+        <textarea id="collegeMissionDescription" class="college-answer" maxlength="5000" required></textarea>
+      </div>`;
+    }
+  });
+  html += `</section>`;
   form.innerHTML = html;
+  document.getElementById("cadetName").addEventListener("input", event => {
+    event.target.value = event.target.value
+      .replace(/[^\p{L}\p{M}\s]/gu, "")
+      .replace(/\s+/g, " ");
+  });
+  document.getElementById("cadetNumber").addEventListener("input", event => {
+    event.target.value = event.target.value.replace(/\D/g, "");
+  });
   showSection(1);
   document.querySelectorAll('input[type=radio]').forEach(el => el.addEventListener('change', updateProgress));
 }
@@ -262,6 +358,17 @@ function toggleCommentState(id, selectedValue){
   else {
     commentWrap.classList.remove("show");
     commentField.removeAttribute("required");
+    commentField.value = "";
+  }
+}
+
+function toggleCollegeComment(key, selectedValue){
+  const commentWrap = document.getElementById(`college-${key}-comment-wrap`);
+  const commentField = document.getElementById(`college-${key}-comment`);
+  const requiresComment = selectedValue === "Satisfactory" || selectedValue === "Poor";
+  commentWrap.classList.toggle("show", requiresComment);
+  commentField.required = requiresComment;
+  if(!requiresComment){
     commentField.value = "";
   }
 }
@@ -332,12 +439,24 @@ async function saveToGoogleSheet(){
       mode: "no-cors",
       headers: {"Content-Type":"text/plain;charset=utf-8"},
       body: JSON.stringify({
+        evaluationType: selectedEvaluationType,
         className: document.getElementById("className").value,
         houseName: document.getElementById("houseName").value,
         formName: document.getElementById("formName").value,
         cadetName: document.getElementById("cadetName").value.trim(),
         cadetNumber: document.getElementById("cadetNumber").value.trim(),
-        answers:collectAnswers()
+        answers: selectedEvaluationType === "teacher" ? collectAnswers() : undefined,
+        collegeAnswers: selectedEvaluationType === "college" ? {
+          ratings: Object.fromEntries(COLLEGE_RATING_QUESTIONS.map(question => [
+            question.key,
+            document.querySelector(`input[name="college-${question.key}"]:checked`)?.value || ""
+          ])),
+          comments: Object.fromEntries(COLLEGE_RATING_QUESTIONS.map(question => [
+            question.key,
+            document.getElementById(`college-${question.key}-comment`).value.trim()
+          ])),
+          missionDescription: document.getElementById("collegeMissionDescription").value.trim()
+        } : undefined
       })
     });
     showThankYouPage();
@@ -352,9 +471,33 @@ function showThankYouPage(){
   document.getElementById("assessmentContent").hidden = true;
   document.getElementById("progressSummary").hidden = true;
   const thankYouPage = document.getElementById("thankYouPage");
+  document.getElementById("otherEvaluationButton").textContent = selectedEvaluationType === "college"
+    ? "Start Teacher's Evaluation"
+    : "Start College Evaluation";
   thankYouPage.hidden = false;
   document.getElementById("thankYouHeading").focus();
   window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function startOtherEvaluation(){
+  document.querySelectorAll('#assessmentForm input[type="radio"]').forEach(input => {
+    input.checked = false;
+  });
+  document.querySelectorAll('#assessmentForm textarea').forEach(textarea => {
+    textarea.value = "";
+  });
+  document.querySelectorAll(".comment-wrap").forEach(commentWrap => {
+    commentWrap.classList.remove("show");
+  });
+  document.querySelectorAll(".comment, .college-answer").forEach(textarea => {
+    textarea.required = textarea.classList.contains("college-answer");
+  });
+  document.getElementById("saveStatus").textContent = "";
+  document.getElementById("thankYouPage").hidden = true;
+  document.getElementById("assessmentContent").hidden = false;
+  document.getElementById("progressSummary").hidden = false;
+  updateProgress();
+  startEvaluation(selectedEvaluationType === "college" ? "teacher" : "college");
 }
 
 function finishAssessment(){
@@ -365,24 +508,40 @@ function finishAssessment(){
 }
 
 let currentSection = 1;
+let selectedEvaluationType = "";
 
 function showSection(sectionNumber){
   currentSection = sectionNumber;
+  document.body.classList.toggle("cadet-details-page", currentSection === 1);
+  document.body.classList.toggle("evaluation-choice-page", currentSection === 2);
+  const isCollegePage = currentSection === SECTIONS + 3 && selectedEvaluationType === "college";
+  const isTeacherPage = currentSection >= 3 && currentSection <= SECTIONS + 2;
+  document.body.classList.toggle("college-evaluation-page", isCollegePage);
+  document.body.classList.toggle("teacher-evaluation-page", isTeacherPage);
+  document.getElementById("formTitle").textContent = isCollegePage
+    ? "College Evaluation Form"
+    : isTeacherPage ? "Teacher's Evaluation Form" : "BCC Evaluation Form";
 
   document.querySelectorAll(".section").forEach((section, index)=>{
     section.classList.toggle("active", index + 1 === currentSection);
   });
 
-  document.getElementById("sectionIndicator").textContent =
-    currentSection === 1
-      ? "Cadet Details"
-      : `Section ${currentSection - 1} of ${SECTIONS}`;
+  const teacherFirstPage = 3;
+  const teacherLastPage = SECTIONS + 2;
+  const collegePage = SECTIONS + 3;
+  document.getElementById("sectionIndicator").textContent = isTeacherPage
+    ? `Section ${currentSection - 2} of ${SECTIONS}`
+    : isCollegePage ? "College Evaluation" : currentSection === 1 ? "Cadet Details" : "Choose Evaluation";
+  document.getElementById("progressSummary").hidden = !isTeacherPage;
 
   const prevBtn = document.getElementById("prevBtn");
   prevBtn.hidden = currentSection === 1;
   prevBtn.disabled = currentSection === 1;
+  document.querySelector(".actions").hidden = currentSection <= 2;
   const nextBtn = document.getElementById("nextBtn");
-  if(currentSection === SECTIONS + 1){
+  nextBtn.hidden = currentSection === 2;
+  if((selectedEvaluationType === "teacher" && currentSection === teacherLastPage)
+    || (selectedEvaluationType === "college" && isCollegePage)){
     nextBtn.textContent = "Finish";
     nextBtn.onclick = finishAssessment;
   } else {
@@ -413,10 +572,44 @@ function currentSectionComplete(){
       formField.focus();
       return false;
     }
+    const cadetName = document.getElementById("cadetName");
+    if(cadetName.value.trim() && !/^[\p{L}\p{M}]+(?:\s+[\p{L}\p{M}]+)*$/u.test(cadetName.value.trim())){
+      alert("Cadet Name can contain letters and spaces only.");
+      cadetName.focus();
+      return false;
+    }
     return true;
   }
 
-  const questionSection = currentSection - 1;
+  if(currentSection === 2){
+    return false;
+  }
+
+  if(selectedEvaluationType === "college"){
+    for(const question of COLLEGE_RATING_QUESTIONS){
+      const rating = document.querySelector(`input[name="college-${question.key}"]:checked`);
+      if(!rating){
+        alert(`Please select a rating for Question ${question.number}.`);
+        document.querySelector(`input[name="college-${question.key}"]`).focus();
+        return false;
+      }
+      const commentField = document.getElementById(`college-${question.key}-comment`);
+      if((rating.value === "Satisfactory" || rating.value === "Poor") && !commentField.value.trim()){
+        alert(`Please enter a comment for Question ${question.number} when selecting ${rating.value}.`);
+        commentField.focus();
+        return false;
+      }
+    }
+    const missionDescription = document.getElementById("collegeMissionDescription");
+    if(!missionDescription.value.trim()){
+      alert("Please answer Question 2 before submitting.");
+      missionDescription.focus();
+      return false;
+    }
+    return true;
+  }
+
+  const questionSection = currentSection - 2;
   for(let q=1;q<=QUESTIONS_PER_SECTION;q++){
     const radio = document.querySelector(`input[name="s${questionSection}q${q}"]:checked`);
     const commentField = document.getElementById(`s${questionSection}q${q}-comment`);
@@ -431,15 +624,10 @@ function currentSectionComplete(){
       return false;
     }
      else if(radio.value === "Satisfactory" && !commentField.value.trim()){
-      alert("Please enter a comment for Satisfactory selections before moving to the next section.");
-      commentField.focus();
-      return false;
-    }
-    else if(radio.value === "Poor" && !commentField.value.trim()){
-      alert("Please enter a comment for Poor selections before moving to the next section.");
-      commentField.focus();
-      return false;
-    }
+       alert("Please enter a comment for Satisfactory selections before moving to the next section.");
+       commentField.focus();
+       return false;
+     }
   }
   return true;
 }
@@ -449,21 +637,33 @@ function nextSection(){
     return;
   }
 
-  if(currentSection < SECTIONS + 1){
+  if(currentSection === 1){
+    showSection(2);
+  } else if(currentSection >= 3 && currentSection < SECTIONS + 2){
     showSection(currentSection + 1);
   }
 }
 
 function previousSection(){
   if(currentSection > 1){
-    showSection(currentSection - 1);
+    if(currentSection === 3 || currentSection === SECTIONS + 3){
+      showSection(2);
+    } else {
+      showSection(currentSection - 1);
+    }
   }
+}
+
+function startEvaluation(type){
+  selectedEvaluationType = type;
+  showSection(type === "teacher" ? 3 : SECTIONS + 3);
 }
 
 function clearForm(){
   if(!confirm("Clear all answers and comments?")) return;
   document.getElementById("assessmentForm").reset();
   document.querySelectorAll(".comment-wrap").forEach(x=>x.classList.remove("show"));
+  selectedEvaluationType = "";
   updateProgress();
   showSection(1);
 }

@@ -10,6 +10,16 @@ const VALID_HOUSES = [
   "Shariatullah House"
 ];
 const VALID_FORMS = ["A", "B"];
+const COLLEGE_RATING_FIELDS = [
+  {key: "environmentRating", header: "College Environment Rating"},
+  {key: "educationDevelopmentRating", header: "Education Development Measures Rating"},
+  {key: "diningQualityRating", header: "Cadet Dining and Food Quality Rating"},
+  {key: "houseEnvironmentRating", header: "House Environment Rating"},
+  {key: "formMasterSincerityRating", header: "Form Master Sincerity Rating"},
+  {key: "houseMasterDedicationRating", header: "House Master Sincerity and Dedication Rating"},
+  {key: "hospitalFacilitiesRating", header: "Hospital Facilities and Environment Rating"},
+  {key: "collegeAdjutantSincerityRating", header: "College Adjutant Sincerity Rating"}
+];
 const QUESTION_HEADERS = [
   "Subject Knowledge",
   "Teaching Skill",
@@ -84,12 +94,34 @@ function doPost(e) {
     const className = validateClassName(payload.className);
     const houseName = validateHouseName(payload.houseName);
     const formName = validateFormName(payload.formName);
-    const cadetName = validateOptionalText(payload.cadetName, "Cadet Name", 200);
-    const cadetNumber = validateOptionalText(payload.cadetNumber, "Cadet Number", 100);
-    const answers = validateAnswers(payload.answers);
+    const cadetName = validateCadetName(payload.cadetName);
+    const cadetNumber = validateCadetNumber(payload.cadetNumber);
+    const evaluationType = payload.evaluationType || "teacher";
     const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
     const submittedAt = new Date();
     const submissionId = Utilities.getUuid();
+
+    if (evaluationType === "college") {
+      const collegeAnswers = validateCollegeAnswers(payload.collegeAnswers);
+      ensureTeacherSheetTabs(spreadsheet);
+      saveCollegeEvaluation(spreadsheet, {
+        className: className,
+        houseName: houseName,
+        formName: formName,
+        cadetName: cadetName,
+        cadetNumber: cadetNumber,
+        answers: collegeAnswers,
+        submittedAt: submittedAt,
+        submissionId: submissionId
+      });
+      SpreadsheetApp.flush();
+      return jsonResponse({ok: true, submissionId: submissionId, rowsAdded: 1});
+    }
+    if (evaluationType !== "teacher") {
+      throw new Error("Invalid evaluation type.");
+    }
+
+    const answers = validateAnswers(payload.answers);
     const answersBySection = Array.from({length: SECTION_COUNT}, () => []);
     answers.forEach(answer => answersBySection[answer.section - 1].push(answer));
     const sections = [];
@@ -127,6 +159,8 @@ function doPost(e) {
         isEmpty: isEmpty
       });
     }
+
+    positionCollegeEvaluationSheet(spreadsheet);
 
     sections.forEach(section => {
       const sheet = section.sheet;
@@ -167,6 +201,164 @@ function doPost(e) {
   } finally {
     lock.releaseLock();
   }
+}
+
+function buildCollegeHeaders() {
+  const headers = [
+    "No",
+    "Submit on",
+    "Class",
+    "House",
+    "Form",
+    "Cadet Name",
+    "Cadet Number"
+  ];
+  COLLEGE_RATING_FIELDS.forEach(field => headers.push(field.header, `${field.header} Comment`));
+  headers.push("College Mission or Purpose");
+  return headers;
+}
+
+function saveCollegeEvaluation(spreadsheet, submission) {
+  const sheetName = "College Evaluation";
+  let sheet = spreadsheet.getSheetByName(sheetName);
+  const headers = buildCollegeHeaders();
+  if (sheet && sheet.getLastRow() > 0) {
+    const previousBasicHeaders = [
+      "No",
+      "Submit on",
+      "Class",
+      "House",
+      "Form",
+      "Cadet Name",
+      "Cadet Number"
+    ];
+    const lastRow = sheet.getLastRow();
+    const oldHeaders = sheet.getRange(4, 2, 1, 16).getValues()[0];
+    const hasBasicHeaders = previousBasicHeaders.every((header, index) => oldHeaders[index] === header);
+    const previousRatingOnlyLayout = hasBasicHeaders
+      && oldHeaders[7] === COLLEGE_RATING_FIELDS[0].header
+      && oldHeaders[8] === "College Mission or Purpose";
+    const previousFullLayout = hasBasicHeaders
+      && COLLEGE_RATING_FIELDS.every((field, index) => oldHeaders[index + 7] === field.header)
+      && oldHeaders[15] === "College Mission or Purpose";
+    if (previousRatingOnlyLayout || previousFullLayout) {
+      const oldColumnCount = previousFullLayout ? 16 : 9;
+      const oldRows = sheet.getRange(4, 2, lastRow - 3, oldColumnCount).getValues();
+      const migratedRows = oldRows.map((oldRow, rowIndex) => {
+        if (rowIndex === 0) {
+          return headers;
+        }
+        const ratings = previousFullLayout
+          ? oldRow.slice(7, 15)
+          : [oldRow[7], ...Array(COLLEGE_RATING_FIELDS.length - 1).fill("")];
+        return [
+          ...oldRow.slice(0, 7),
+          ...ratings.flatMap(rating => [rating, ""]),
+          previousFullLayout ? oldRow[15] : oldRow[8]
+        ];
+      });
+      sheet.getRange(4, 2, migratedRows.length, headers.length).setValues(migratedRows);
+    } else {
+      const existingHeaders = sheet.getRange(4, 2, 1, headers.length).getValues()[0];
+      if (!headers.every((header, index) => existingHeaders[index] === header)) {
+        archiveSheet(spreadsheet, sheet, sheetName);
+        sheet = null;
+      }
+    }
+  }
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(sheetName);
+  }
+  if (sheet.getLastRow() === 0) {
+    sheet.getRange(2, 9, 1, 6).merge();
+  }
+  sheet.getRange(2, 9).setValue("College Evaluation");
+  sheet.getRange(2, 9, 1, 6)
+    .setFontWeight("bold")
+    .setHorizontalAlignment("center");
+  sheet.getRange(4, 2, 1, headers.length)
+    .setFontWeight("bold")
+    .setHorizontalAlignment("center")
+    .setVerticalAlignment("middle")
+    .setWrap(true);
+  sheet.getRange(4, 2, 1, headers.length).setValues([headers]);
+  sheet.setFrozenRows(4);
+  positionCollegeEvaluationSheet(spreadsheet);
+
+  const rowNumber = getNextResponseRow(sheet);
+  const row = [
+    rowNumber - 4,
+    submission.submittedAt,
+    submission.className,
+    submission.houseName,
+    submission.formName,
+    safeCellText(submission.cadetName),
+    safeCellText(submission.cadetNumber),
+    ...COLLEGE_RATING_FIELDS.flatMap(field => [
+      submission.answers.ratings[field.key],
+      safeCellText(submission.answers.comments[field.key])
+    ]),
+    safeCellText(submission.answers.missionDescription)
+  ];
+  sheet.getRange(rowNumber, 2, 1, row.length).setValues([row]);
+}
+
+function positionCollegeEvaluationSheet(spreadsheet) {
+  const sheet = spreadsheet.getSheetByName("College Evaluation");
+  if (sheet) {
+    sheet.setIndex(SECTION_COUNT + 1);
+  }
+}
+
+function ensureTeacherSheetTabs(spreadsheet) {
+  const sheetNames = getSectionSheetNames();
+  sheetNames.forEach((sheetName, index) => {
+    if (spreadsheet.getSheetByName(sheetName)) {
+      return;
+    }
+    const oldSheet = spreadsheet.getSheetByName(`Section ${index + 1}`);
+    if (oldSheet) {
+      oldSheet.setName(sheetName);
+    } else {
+      spreadsheet.insertSheet(sheetName);
+    }
+  });
+}
+
+function validateCollegeAnswers(answers) {
+  if (!answers
+    || !answers.ratings
+    || typeof answers.missionDescription !== "string"
+    || !answers.missionDescription.trim()
+    || answers.missionDescription.length > 5000) {
+    throw new Error("Invalid or incomplete College Evaluation answers.");
+  }
+  const ratings = {};
+  COLLEGE_RATING_FIELDS.forEach(field => {
+    if (!OPTIONS.includes(answers.ratings[field.key])) {
+      throw new Error(`Invalid or missing ${field.header}.`);
+    }
+    ratings[field.key] = answers.ratings[field.key];
+  });
+  if (!answers.comments || typeof answers.comments !== "object") {
+    throw new Error("Invalid or missing College Evaluation comments.");
+  }
+  const comments = {};
+  COLLEGE_RATING_FIELDS.forEach(field => {
+    const comment = answers.comments[field.key];
+    if (typeof comment !== "string"
+      || comment.length > MAX_COMMENT_LENGTH
+      || ((ratings[field.key] === "Satisfactory" || ratings[field.key] === "Poor")
+        && !comment.trim())) {
+      throw new Error(`Invalid or missing comment for ${field.header}.`);
+    }
+    comments[field.key] = comment.trim();
+  });
+  return {
+    ratings: ratings,
+    comments: comments,
+    missionDescription: answers.missionDescription.trim()
+  };
 }
 
 function buildHeaders() {
@@ -224,6 +416,22 @@ function validateOptionalText(value, fieldName, maxLength) {
   return value.trim();
 }
 
+function validateCadetName(value) {
+  const name = validateOptionalText(value, "Cadet Name", 200);
+  if (name && !/^[\p{L}\p{M}]+(?:\s+[\p{L}\p{M}]+)*$/u.test(name)) {
+    throw new Error("Cadet Name may contain letters and spaces only.");
+  }
+  return name;
+}
+
+function validateCadetNumber(value) {
+  const number = validateOptionalText(value, "Cadet Number", 100);
+  if (number && !/^\d+$/.test(number)) {
+    throw new Error("Cadet Number may contain digits only.");
+  }
+  return number;
+}
+
 function validateAnswers(answers) {
   const expectedCount = SECTION_COUNT * QUESTIONS_PER_SECTION;
   if (!Array.isArray(answers) || answers.length !== expectedCount) {
@@ -239,7 +447,9 @@ function validateAnswers(answers) {
       || typeof answer.questionText !== "string"
       || typeof answer.comment !== "string"
       || answer.comment.length > MAX_COMMENT_LENGTH
-      || (answer.selectedOption !== "" && !OPTIONS.includes(answer.selectedOption))) {
+      || !OPTIONS.includes(answer.selectedOption)
+      || ((answer.selectedOption === "Satisfactory" || answer.selectedOption === "Poor")
+        && !answer.comment.trim())) {
       throw new Error(`Invalid answer at row ${index + 1}.`);
     }
     return answer;
