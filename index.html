@@ -13,7 +13,12 @@ header{background:#fff;border-radius:16px;padding:24px;margin-bottom:18px;box-sh
 h1{margin:0 0 8px;font-size:28px}
 .subtitle{color:var(--muted)}
 .section{background:var(--card);border-radius:16px;padding:22px;margin:18px 0;box-shadow:0 4px 18px #0000000d}
-.section-title{font-size:20px;font-weight:700;margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid #e8edf5}
+.section-header{display:flex;align-items:center;gap:14px;border-bottom:2px solid #e8edf5;padding-bottom:12px;margin-bottom:18px;flex-wrap:wrap}
+.section-person{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.person-photo{width:72px;height:72px;object-fit:cover;border-radius:50%;border:2px solid #dfe7f3;background:#f8fafc}
+.person-meta{display:flex;flex-direction:column;gap:4px}
+.section-title{font-size:20px;font-weight:700}
+.person-name{font-size:16px;color:var(--muted);font-weight:600}
 .question{padding:16px 0;border-bottom:1px solid #edf1f6}
 .question:last-child{border-bottom:0}
 .qtext{font-weight:600;margin-bottom:12px}
@@ -80,23 +85,79 @@ const OPTIONS = ["Excellent", "Good", "Fair", "Poor"];
 const SECTIONS = 40;
 const QUESTIONS_PER_SECTION = 4;
 const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw6BfZIr6yXmvrF_rjkmrrUBguC-klKwnGAcxpjXgxP73xkuzUu7sLnQDIr5l4gLp8A/exec"
+const SECTION_PHOTOS = [
+  "1. Md. Nazrul Islam.jpg",
+  "10. Muhammad Shahab Uddin.jpg",
+  "11. Mukti Rani Modak.JPG",
+  "12. Syed Selimuzzaman.JPG",
+  "13. Muhammad Abul Kalam Azad.jpg",
+  "14. Md. Mohiuddin Khan.jpg",
+  "15. Safina Rahat.jpg",
+  "16. Arif sir.jpg",
+  "17. Nazmus Shahid Sir.jpg",
+  "2. Lt. Col. Tahsin Salehin.jpg",
+  "2. Vice Principal.jpg",
+  "25. Md. Matiur Rahman.jpg",
+  "26. Abu Nayeem Mohammad Ekram.JPG",
+  "27. Joydev Mondal.JPG",
+  "28. Metun Mondol.jpg",
+  "29. Mohsin Emran.jpg",
+  "3. Adjutant Major Ali.jpg",
+  "3. Jamuna Madam.jpg",
+  "3. MO-Rashed.jpg",
+  "33. Nazim Al Hasan.jpg",
+  "34. Mst. Taskia.jpg",
+  "35. Jannatul Ferdous.jpg",
+  "4. Md. Taufiqul Alam.jpg",
+  "5. Md. Tareekul Haq.jpg",
+  "6. Pradipta Sir.jpg",
+  "7. Md. Mahbubul Alam.jpg",
+  "8. Mes. Asmaul Mahmuda Taslima.jpg",
+  "9. Md. Main Uddin Khan.JPG",
+  "AO.jpg",
+  "Ibrahim Molla.jpg",
+  "Indrajit Kundu.jpg",
+  "Md Iftekhar Alam.jpg",
+  "Mumin Bhai.jpg",
+  "Munni Madam.jpg",
+  "Nazim Al Hasan.jpg",
+  "Nazmul Hasan.jpg",
+  "Nazrul sir.jpg",
+  "Sazzadur Rahman.jpg",
+  "AO.jpg",
+  "Ibrahim Molla.jpg"
+];
 let submissionInProgress = false;
+
+function getSectionPhotoName(index){
+  const photoName = SECTION_PHOTOS[index] || SECTION_PHOTOS[index % SECTION_PHOTOS.length];
+  const name = photoName.replace(/^\d+\.\s*/, "").replace(/\.[^.]+$/, "").trim();
+  return { photoName, name };
+}
 
 function buildForm(){
   const form = document.getElementById("assessmentForm");
   let html = "";
   for(let s=1;s<=SECTIONS;s++){
+    const { photoName, name } = getSectionPhotoName(s - 1);
+    const safePhotoPath = `photo/${encodeURIComponent(photoName)}`;
     html += `<section class="section">
-      <div class="section-title">Section ${s}</div>`;
+      <div class="section-header">
+        <div class="section-person">
+          <img class="person-photo" src="${safePhotoPath}" alt="${name}">
+          <div class="person-meta">
+            <div class="section-title">${name}</div>
+          </div>
+        </div>
+      </div>`;
     for(let q=1;q<=QUESTIONS_PER_SECTION;q++){
       const id = `s${s}q${q}`;
       html += `<div class="question">
         <div class="qtext">Question ${q}: Enter your question here.</div>
         <div class="options">`;
       OPTIONS.forEach((op,i)=>{
-        const isFourth = i === 3;
         html += `<label class="option">
-          <input type="radio" name="${id}" value="${op}" onchange="${isFourth ? `showComment('${id}')` : `hideComment('${id}')`}"> ${op}
+          <input type="radio" name="${id}" value="${op}" onchange="toggleCommentState('${id}', this.value)"> ${op}
         </label>`;
       });
       html += `</div>
@@ -112,12 +173,33 @@ function buildForm(){
   document.querySelectorAll('input[type=radio]').forEach(el => el.addEventListener('change', updateProgress));
 }
 
+function toggleCommentState(id, selectedValue){
+  const commentWrap = document.getElementById(id + "-comment-wrap");
+  const commentField = document.getElementById(id + "-comment");
+  const isPoor = selectedValue === "Poor";
+
+  if (isPoor) {
+    commentWrap.classList.add("show");
+    commentField.setAttribute("required", "required");
+  } else {
+    commentWrap.classList.remove("show");
+    commentField.removeAttribute("required");
+    commentField.value = "";
+  }
+}
+
 function showComment(id){
-  document.getElementById(id+"-comment-wrap").classList.add("show");
+  const commentWrap = document.getElementById(id + "-comment-wrap");
+  const commentField = document.getElementById(id + "-comment");
+  commentWrap.classList.add("show");
+  commentField.setAttribute("required", "required");
 }
 function hideComment(id){
-  document.getElementById(id+"-comment-wrap").classList.remove("show");
-  document.getElementById(id+"-comment").value = "";
+  const commentWrap = document.getElementById(id + "-comment-wrap");
+  const commentField = document.getElementById(id + "-comment");
+  commentWrap.classList.remove("show");
+  commentField.removeAttribute("required");
+  commentField.value = "";
 }
 
 function updateProgress(){
@@ -209,7 +291,16 @@ function showSection(sectionNumber){
 
 function currentSectionComplete(){
   for(let q=1;q<=QUESTIONS_PER_SECTION;q++){
-    if(!document.querySelector(`input[name="s${currentSection}q${q}"]:checked`)){
+    const radio = document.querySelector(`input[name="s${currentSection}q${q}"]:checked`);
+    const commentField = document.getElementById(`s${currentSection}q${q}-comment`);
+
+    if(!radio){
+      return false;
+    }
+
+    if(radio.value === "Poor" && !commentField.value.trim()){
+      alert("Please enter a comment for Poor selections before moving to the next section.");
+      commentField.focus();
       return false;
     }
   }
@@ -218,7 +309,6 @@ function currentSectionComplete(){
 
 function nextSection(){
   if(!currentSectionComplete()){
-    alert("Please select an option for all 4 questions before going to the next section.");
     return;
   }
 
