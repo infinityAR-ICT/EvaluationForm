@@ -1,5 +1,4 @@
 const SPREADSHEET_ID = "12UGu3FmqVhGbjwCyJUiR4owIqwU6klFNB0yzU1SRH-w";
-const RESPONSE_SHEET_NAME = "Responses";
 const OPTIONS = ["Option 1", "Option 2", "Option 3", "Option 4"];
 const SECTION_COUNT = 40;
 const QUESTIONS_PER_SECTION = 4;
@@ -13,42 +12,54 @@ function doPost(e) {
     const payload = JSON.parse(e.postData.contents);
     const answers = validateAnswers(payload.answers);
     const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const sheet = spreadsheet.getSheetByName(RESPONSE_SHEET_NAME)
-      || spreadsheet.insertSheet(RESPONSE_SHEET_NAME);
-
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow([
-        "Submitted At",
-        "Submission ID",
-        "Section",
-        "Question Number",
-        "Question",
-        "Selected Option",
-        "Comment"
-      ]);
-    }
-
     const submittedAt = new Date();
     const submissionId = Utilities.getUuid();
-    const rows = answers.map(answer => [
-      submittedAt,
-      submissionId,
-      answer.section,
-      answer.question,
-      safeCellText(answer.questionText),
-      answer.selectedOption,
-      safeCellText(answer.comment)
-    ]);
+    const answersBySection = Array.from({length: SECTION_COUNT}, () => []);
+    answers.forEach(answer => answersBySection[answer.section - 1].push(answer));
 
-    sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
+    for (let section = 1; section <= SECTION_COUNT; section++) {
+      const sheetName = `Section ${section}`;
+      const sheet = spreadsheet.getSheetByName(sheetName)
+        || spreadsheet.insertSheet(sheetName);
+      const headers = buildHeaders();
+
+      if (sheet.getLastRow() === 0) {
+        sheet.appendRow(headers);
+      } else {
+        const existingHeaders = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
+        if (headers.some((header, index) => existingHeaders[index] !== header)) {
+          throw new Error(`Unexpected headers in ${sheetName}.`);
+        }
+      }
+
+      const row = [submittedAt, submissionId];
+      answersBySection[section - 1].forEach(answer => {
+        row.push(answer.selectedOption, safeCellText(answer.comment));
+      });
+      sheet.getRange(sheet.getLastRow() + 1, 1, 1, row.length).setValues([row]);
+    }
+
     SpreadsheetApp.flush();
-    return jsonResponse({ok: true, submissionId: submissionId, rowsAdded: rows.length});
+    return jsonResponse({
+      ok: true,
+      submissionId: submissionId,
+      sectionsUpdated: SECTION_COUNT,
+      rowsAdded: SECTION_COUNT
+    });
   } catch (error) {
     console.error(error);
     return jsonResponse({ok: false, error: "The response could not be saved."});
   } finally {
     lock.releaseLock();
   }
+}
+
+function buildHeaders() {
+  const headers = ["Submitted At", "Submission ID"];
+  for (let question = 1; question <= QUESTIONS_PER_SECTION; question++) {
+    headers.push(`Question ${question} - Selected Option`, `Question ${question} - Comment`);
+  }
+  return headers;
 }
 
 function validateAnswers(answers) {
