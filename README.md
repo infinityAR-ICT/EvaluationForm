@@ -1,17 +1,16 @@
 # EvaluationForm
 
-Evaluation form for teachers. The form can export the answers to an Excel workbook or save the workbook to a configured Google Drive folder.
+Evaluation form for teachers. The **Save Responses** button sends all 160 question responses directly to the configured Google Sheet through a Google Apps Script web app. It does not create an XLSX file or use Google Drive OAuth.
 
-## Configure Google Drive saving
+## Set up Google Sheets saving
 
-Google Drive saving uses Google sign-in, Google Picker, and the Drive API's limited `drive.file` permission. It does not use a backend or grant the page general access to a user's Drive.
+1. Open the destination spreadsheet: [Evaluation responses](https://docs.google.com/spreadsheets/d/12UGu3FmqVhGbjwCyJUiR4owIqwU6klFNB0yzU1SRH-w/edit).
+2. Open **Extensions → Apps Script**. Replace the starter code in `Code.gs` with the contents of this repository's `Code.gs`, then save.
+3. In Apps Script, choose **Deploy → New deployment → Web app**.
+4. Set **Execute as** to your account and **Who has access** to **Anyone**, then deploy and complete Google's authorization prompts. This lets respondents submit without signing in; the script writes using the deploying account's spreadsheet access.
+5. Copy the deployed web app URL ending in `/exec`. In `index.html`, replace `YOUR_APPS_SCRIPT_WEB_APP_URL` in `GOOGLE_SHEETS_WEB_APP_URL` with that URL. Publish the updated form.
+6. Test with a submission, then check the spreadsheet's `Responses` tab. The script creates the tab and header row if needed, then appends one row per question, grouped by submission ID and timestamp.
 
-1. In Google Cloud Console, create or select a project and enable **Google Drive API** and **Google Picker API**.
-2. Configure the OAuth consent screen. Add test users while testing; Google may require additional consent-screen setup or verification before public use.
-3. Create an OAuth client ID of type **Web application**. Add the exact site origin (scheme + host, without a path) under **Authorized JavaScript origins**.
-4. Create an API key for Google Picker. Restrict it to the deployed site's HTTP referrers and the Google Picker API.
-5. In `index.html`, replace `YOUR_GOOGLE_OAUTH_CLIENT_ID` and `YOUR_GOOGLE_API_KEY` with the values from Google Cloud Console. The API key is visible in the page, so keep its referrer/API restrictions enabled.
-6. The destination folder ID is already set to `15Y5Dmle5QvCul7KGRbE3RbXMSEcRCDQZ`. To change the destination, update `GOOGLE_DRIVE_FOLDER_ID` to the folder ID from its Drive URL.
-7. Give each user Google account **Editor** access to the destination folder. Users sign in, select that exact folder in Google Picker the first time, and then the form saves subsequent workbooks there. The selected folder ID is stored in that browser's local storage.
+The public web app URL is not authentication. Anyone who obtains it can submit rows to the spreadsheet as the deploying account, potentially causing unwanted submissions or using your Apps Script quota. Share the form and endpoint carefully, monitor the sheet, and disable or redeploy the web app if it is abused. An anonymous endpoint cannot provide the protections of user sign-in.
 
-The **Save / Export to Excel** button saves the workbook to Google Drive, and the final-section **Finish** button does the same. If Drive is not configured or upload fails, the form displays an error.
+The browser uses a cross-origin `no-cors` request because Apps Script web apps do not expose their response to this page. The form reports that the request was sent, but cannot confirm the server-side result; verify the `Responses` tab if a submission does not appear.
