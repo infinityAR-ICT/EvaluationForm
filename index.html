@@ -70,7 +70,7 @@ button{border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:poin
 
 <div class="actions">
   <button type="button" class="secondary" onclick="clearForm()">Clear Form</button>
-  <button type="button" class="primary" onclick="saveToGoogleSheet()">Save Responses</button>
+  <button type="button" class="primary" id="saveResponsesBtn" onclick="saveToGoogleSheet()" hidden>Save Responses</button>
 </div>
 <div id="saveStatus" class="note" role="status" aria-live="polite" style="text-align:center"></div>
 </div>
@@ -193,6 +193,7 @@ function showSection(sectionNumber){
     `Section ${currentSection} of ${SECTIONS}`;
 
   document.getElementById("prevBtn").disabled = currentSection === 1;
+  document.getElementById("saveResponsesBtn").hidden = currentSection !== SECTIONS;
 
   const nextBtn = document.getElementById("nextBtn");
   if(currentSection === SECTIONS){
