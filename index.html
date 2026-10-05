@@ -19,6 +19,11 @@ h1{margin:0 0 8px;font-size:28px}
 .person-meta{display:flex;flex-direction:column;gap:4px}
 .section-title{font-size:20px;font-weight:700}
 .person-name{font-size:16px;color:var(--muted);font-weight:600}
+.student-details{display:flex;gap:16px;flex-wrap:wrap;margin:0 0 20px}
+.class-field{flex:1 1 240px}
+.class-field label{display:block;font-weight:700;margin-bottom:8px}
+.class-field select{width:100%;border:1px solid #cfd8e6;border-radius:10px;padding:11px 12px;background:#fff;font:inherit}
+.class-field input{width:100%;border:1px solid #cfd8e6;border-radius:10px;padding:11px 12px;background:#fff;font:inherit}
 .question{padding:16px 0;border-bottom:1px solid #edf1f6}
 .question:last-child{border-bottom:0}
 .qtext{font-weight:600;margin-bottom:12px}
@@ -81,10 +86,16 @@ button{border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:poin
 </div>
 
 <script>
-const OPTIONS = ["Excellent", "Good", "Fair", "Poor"];
+const OPTIONS = ["Excellent", "Standard", "Good", "Satisfactory", "Poor", ];
 const SECTIONS = 40;
-const QUESTIONS_PER_SECTION = 4;
-const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw6BfZIr6yXmvrF_rjkmrrUBguC-klKwnGAcxpjXgxP73xkuzUu7sLnQDIr5l4gLp8A/exec"
+const QUESTION_TEXTS = [
+  "1: Subject Knowledge",
+  "2: Teaching Skill",
+  "3: Sincerity towards The Cadets",
+  "4: Personality & Behaviour"
+];
+const QUESTIONS_PER_SECTION = QUESTION_TEXTS.length;
+const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwdJ7Jf-0Hlj_ON2u8sIIaK0lq2F34Q96el5MbOJiHJt1AnB5KrapnXKw0SE0M93RLM/exec"
 const SECTION_PHOTOS = [
   "1. Md. Nazrul Islam.jpg",
   "10. Muhammad Shahab Uddin.jpg",
@@ -142,6 +153,45 @@ function buildForm(){
     const { photoName, name } = getSectionPhotoName(s - 1);
     const safePhotoPath = `photo/${encodeURIComponent(photoName)}`;
     html += `<section class="section">
+      ${s === 1 ? `<div class="student-details">
+        <div class="class-field">
+          <label for="className">Class <span aria-hidden="true">*</span></label>
+          <select id="className" name="className" required>
+            <option value="">Select a class</option>
+            <option value="VII">VII</option>
+            <option value="VIII">VIII</option>
+            <option value="IX">IX</option>
+            <option value="X">X</option>
+            <option value="XI">XI</option>
+            <option value="XII">XII</option>
+          </select>
+        </div>
+        <div class="class-field">
+          <label for="houseName">House <span aria-hidden="true">*</span></label>
+          <select id="houseName" name="houseName" required>
+            <option value="">Select a house</option>
+            <option value="Shaheed Suhrawardy House">Shaheed Suhrawardy House</option>
+            <option value="Sher-e-Bangla House">Sher-e-Bangla House</option>
+            <option value="Shariatullah House">Shariatullah House</option>
+          </select>
+        </div>
+        <div class="class-field">
+          <label for="formName">Form <span aria-hidden="true">*</span></label>
+          <select id="formName" name="formName" required>
+            <option value="">Select a form</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+          </select>
+        </div>
+        <div class="class-field">
+          <label for="cadetName">Cadet Name (optional)</label>
+          <input id="cadetName" name="cadetName" type="text" maxlength="200">
+        </div>
+        <div class="class-field">
+          <label for="cadetNumber">Cadet Number (optional)</label>
+          <input id="cadetNumber" name="cadetNumber" type="text" maxlength="100">
+        </div>
+      </div>` : ""}
       <div class="section-header">
         <div class="section-person">
           <img class="person-photo" src="${safePhotoPath}" alt="${name}">
@@ -153,7 +203,7 @@ function buildForm(){
     for(let q=1;q<=QUESTIONS_PER_SECTION;q++){
       const id = `s${s}q${q}`;
       html += `<div class="question">
-        <div class="qtext">Question ${q}: Enter your question here.</div>
+        <div class="qtext">${QUESTION_TEXTS[q - 1]}</div>
         <div class="options">`;
       OPTIONS.forEach((op,i)=>{
         html += `<label class="option">
@@ -176,12 +226,18 @@ function buildForm(){
 function toggleCommentState(id, selectedValue){
   const commentWrap = document.getElementById(id + "-comment-wrap");
   const commentField = document.getElementById(id + "-comment");
+  const isSatisfactory = selectedValue === "Satisfactory";
   const isPoor = selectedValue === "Poor";
 
   if (isPoor) {
     commentWrap.classList.add("show");
     commentField.setAttribute("required", "required");
-  } else {
+  } 
+   else if (isSatisfactory) {
+    commentWrap.classList.add("show");
+    commentField.setAttribute("required", "required");
+  }
+  else {
     commentWrap.classList.remove("show");
     commentField.removeAttribute("required");
     commentField.value = "";
@@ -224,7 +280,7 @@ function collectAnswers(){
       answers.push({
         section: s,
         question: q,
-        questionText: `Question ${q}: Enter your question here.`,
+        questionText: QUESTION_TEXTS[q - 1],
         selectedOption: selected ? selected.value : "",
         comment
       });
@@ -253,7 +309,14 @@ async function saveToGoogleSheet(){
       method: "POST",
       mode: "no-cors",
       headers: {"Content-Type":"text/plain;charset=utf-8"},
-      body: JSON.stringify({answers:collectAnswers()})
+      body: JSON.stringify({
+        className: document.getElementById("className").value,
+        houseName: document.getElementById("houseName").value,
+        formName: document.getElementById("formName").value,
+        cadetName: document.getElementById("cadetName").value.trim(),
+        cadetNumber: document.getElementById("cadetNumber").value.trim(),
+        answers:collectAnswers()
+      })
     });
     setSaveStatus("Submission sent.Thank you for completing the assessment!");
   } catch(error){
@@ -290,6 +353,27 @@ function showSection(sectionNumber){
 }
 
 function currentSectionComplete(){
+  if(currentSection === 1){
+    const classField = document.getElementById("className");
+    if(!classField.value){
+      alert("Please select a class before moving to the next section.");
+      classField.focus();
+      return false;
+    }
+    const houseField = document.getElementById("houseName");
+    if(!houseField.value){
+      alert("Please select a house before moving to the next section.");
+      houseField.focus();
+      return false;
+    }
+    const formField = document.getElementById("formName");
+    if(!formField.value){
+      alert("Please select a form before moving to the next section.");
+      formField.focus();
+      return false;
+    }
+  }
+
   for(let q=1;q<=QUESTIONS_PER_SECTION;q++){
     const radio = document.querySelector(`input[name="s${currentSection}q${q}"]:checked`);
     const commentField = document.getElementById(`s${currentSection}q${q}-comment`);
@@ -299,6 +383,16 @@ function currentSectionComplete(){
     }
 
     if(radio.value === "Poor" && !commentField.value.trim()){
+      alert("Please enter a comment for Poor selections before moving to the next section.");
+      commentField.focus();
+      return false;
+    }
+     else if(radio.value === "Satisfactory" && !commentField.value.trim()){
+      alert("Please enter a comment for Satisfactory selections before moving to the next section.");
+      commentField.focus();
+      return false;
+    }
+    else if(radio.value === "Poor" && !commentField.value.trim()){
       alert("Please enter a comment for Poor selections before moving to the next section.");
       commentField.focus();
       return false;

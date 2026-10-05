@@ -3,6 +3,93 @@ const OPTIONS = ["Option 1", "Option 2", "Option 3", "Option 4"];
 const SECTION_COUNT = 40;
 const QUESTIONS_PER_SECTION = 4;
 const MAX_COMMENT_LENGTH = 45000;
+const VALID_CLASSES = ["VII", "VIII", "IX", "X", "XI", "XII"];
+const VALID_HOUSES = [
+  "Shaheed Suhrawardy House",
+  "Sher-e-Bangla House",
+  "Shariatullah House"
+];
+const VALID_FORMS = ["A", "B"];
+const SECTION_PHOTO_FILES = [
+  "1. Md. Nazrul Islam.jpg",
+  "10. Muhammad Shahab Uddin.jpg",
+  "11. Mukti Rani Modak.JPG",
+  "12. Syed Selimuzzaman.JPG",
+  "13. Muhammad Abul Kalam Azad.jpg",
+  "14. Md. Mohiuddin Khan.jpg",
+  "15. Safina Rahat.jpg",
+  "16. Arif sir.jpg",
+  "17. Nazmus Shahid Sir.jpg",
+  "2. Lt. Col. Tahsin Salehin.jpg",
+  "2. Vice Principal.jpg",
+  "25. Md. Matiur Rahman.jpg",
+  "26. Abu Nayeem Mohammad Ekram.JPG",
+  "27. Joydev Mondal.JPG",
+  "28. Metun Mondol.jpg",
+  "29. Mohsin Emran.jpg",
+  "3. Adjutant Major Ali.jpg",
+  "3. Jamuna Madam.jpg",
+  "3. MO-Rashed.jpg",
+  "33. Nazim Al Hasan.jpg",
+  "34. Mst. Taskia.jpg",
+  "35. Jannatul Ferdous.jpg",
+  "4. Md. Taufiqul Alam.jpg",
+  "5. Md. Tareekul Haq.jpg",
+  "6. Pradipta Sir.jpg",
+  "7. Md. Mahbubul Alam.jpg",
+  "8. Mes. Asmaul Mahmuda Taslima.jpg",
+  "9. Md. Main Uddin Khan.JPG",
+  "AO.jpg",
+  "Ibrahim Molla.jpg",
+  "Indrajit Kundu.jpg",
+  "Md Iftekhar Alam.jpg",
+  "Mumin Bhai.jpg",
+  "Munni Madam.jpg",
+  "Nazim Al Hasan.jpg",
+  "Nazmul Hasan.jpg",
+  "Nazrul sir.jpg",
+  "Sazzadur Rahman.jpg",
+  "AO.jpg",
+  "Ibrahim Molla.jpg"
+];
+
+function getSectionSheetNames() {
+  const usedNames = {};
+  return SECTION_PHOTO_FILES.map(fileName => {
+    const baseName = fileName.replace(/^\d+\.\s*/, "").replace(/\.[^.]+$/, "").trim();
+    let sheetName = baseName;
+    let suffix = 2;
+    while (usedNames[sheetName.toLowerCase()]) {
+      sheetName = `${baseName} (${suffix})`;
+      suffix++;
+    }
+    usedNames[sheetName.toLowerCase()] = true;
+    return sheetName;
+  });
+}
+
+function renameSectionSheets() {
+  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheetNames = getSectionSheetNames();
+  const renames = [];
+
+  for (let section = 1; section <= SECTION_COUNT; section++) {
+    const oldSheet = spreadsheet.getSheetByName(`Section ${section}`);
+    const targetSheet = spreadsheet.getSheetByName(sheetNames[section - 1]);
+    if (oldSheet && targetSheet && oldSheet.getSheetId() !== targetSheet.getSheetId()) {
+      throw new Error(`Both "Section ${section}" and "${sheetNames[section - 1]}" exist. Resolve the duplicate tabs before renaming.`);
+    }
+    if (oldSheet && !targetSheet) {
+      renames.push({sheet: oldSheet, name: sheetNames[section - 1]});
+    }
+  }
+
+  renames.forEach(rename => {
+    rename.sheet.setName(rename.name);
+    rename.sheet.getRange(2, 4).setValue(rename.name);
+  });
+  SpreadsheetApp.flush();
+}
 
 function doPost(e) {
   const lock = LockService.getScriptLock();
@@ -10,6 +97,11 @@ function doPost(e) {
 
   try {
     const payload = JSON.parse(e.postData.contents);
+    const className = validateClassName(payload.className);
+    const houseName = validateHouseName(payload.houseName);
+    const formName = validateFormName(payload.formName);
+    const cadetName = validateOptionalText(payload.cadetName, "Cadet Name", 200);
+    const cadetNumber = validateOptionalText(payload.cadetNumber, "Cadet Number", 100);
     const answers = validateAnswers(payload.answers);
     const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
     const submittedAt = new Date();
@@ -17,18 +109,36 @@ function doPost(e) {
     const answersBySection = Array.from({length: SECTION_COUNT}, () => []);
     answers.forEach(answer => answersBySection[answer.section - 1].push(answer));
     const sections = [];
+    const sheetNames = getSectionSheetNames();
 
     for (let section = 1; section <= SECTION_COUNT; section++) {
-      const sheetName = `Section ${section}`;
-      const sheet = spreadsheet.getSheetByName(sheetName)
-        || spreadsheet.insertSheet(sheetName);
+      const sheetName = sheetNames[section - 1];
+      let sheet = spreadsheet.getSheetByName(sheetName);
+      const oldSheet = spreadsheet.getSheetByName(`Section ${section}`);
+      if (sheet && oldSheet && sheet.getSheetId() !== oldSheet.getSheetId()) {
+        throw new Error(`Both "Section ${section}" and "${sheetName}" exist. Resolve the duplicate tabs before submitting.`);
+      }
+      if (!sheet && oldSheet) {
+        oldSheet.setName(sheetName);
+        sheet = oldSheet;
+      }
+      if (!sheet) {
+        sheet = spreadsheet.insertSheet(sheetName);
+      }
       const headers = buildHeaders();
       const isEmpty = sheet.getLastRow() === 0;
 
       if (!isEmpty) {
-        const existingHeaders = sheet.getRange(4, 1, 1, headers.length).getValues()[0];
-        if (headers.some((header, index) => existingHeaders[index] !== header)) {
+        const responseHeaders = headers.slice(0, -5);
+        const existingHeaders = sheet.getRange(4, 1, 1, responseHeaders.length).getValues()[0];
+        if (responseHeaders.some((header, index) => existingHeaders[index] !== header)) {
           throw new Error(`Unexpected headers in ${sheetName}.`);
+        }
+        for (let index = responseHeaders.length; index < headers.length; index++) {
+          const existingHeader = sheet.getRange(4, index + 1).getValue();
+          if (existingHeader && existingHeader !== headers[index]) {
+            throw new Error(`Unexpected ${headers[index]} column header in ${sheetName}.`);
+          }
         }
       }
 
@@ -44,13 +154,17 @@ function doPost(e) {
     sections.forEach(section => {
       const sheet = section.sheet;
       if (section.isEmpty) {
-        sheet.getRange(2, 4).setValue(section.sheetName);
         sheet.getRange(2, 4, 1, 6).merge();
         sheet.getRange(4, 1, 1, section.headers.length).setValues([section.headers]);
-      } else if (!sheet.getRange(2, 4).getValue()) {
-        sheet.getRange(2, 4).setValue(section.sheetName);
-        sheet.getRange(2, 4, 1, 6).merge();
+      } else {
+        const responseHeaderCount = section.headers.length - 5;
+        for (let index = responseHeaderCount; index < section.headers.length; index++) {
+          if (!sheet.getRange(4, index + 1).getValue()) {
+            sheet.getRange(4, index + 1).setValue(section.headers[index]);
+          }
+        }
       }
+      sheet.getRange(2, 4).setValue(section.sheetName);
       sheet.getRange(2, 4, 1, 6)
         .setFontWeight("bold")
         .setHorizontalAlignment("center");
@@ -66,6 +180,11 @@ function doPost(e) {
       answersBySection[section.sectionNumber - 1].forEach(answer => {
         row.push(answer.selectedOption, safeCellText(answer.comment));
       });
+      row.push(className);
+      row.push(houseName);
+      row.push(formName);
+      row.push(safeCellText(cadetName));
+      row.push(safeCellText(cadetNumber));
       sheet.getRange(rowNumber, 1, 1, row.length).setValues([row]);
     });
 
@@ -89,7 +208,43 @@ function buildHeaders() {
   for (let question = 1; question <= QUESTIONS_PER_SECTION; question++) {
     headers.push(`Question ${question}: Response`, "Comment");
   }
+  headers.push("Class");
+  headers.push("House");
+  headers.push("Form");
+  headers.push("Cadet Name");
+  headers.push("Cadet Number");
   return headers;
+}
+
+function validateClassName(className) {
+  if (!VALID_CLASSES.includes(className)) {
+    throw new Error("Invalid or missing class.");
+  }
+  return className;
+}
+
+function validateHouseName(houseName) {
+  if (!VALID_HOUSES.includes(houseName)) {
+    throw new Error("Invalid or missing house.");
+  }
+  return houseName;
+}
+
+function validateFormName(formName) {
+  if (!VALID_FORMS.includes(formName)) {
+    throw new Error("Invalid or missing form.");
+  }
+  return formName;
+}
+
+function validateOptionalText(value, fieldName, maxLength) {
+  if (value === undefined || value === null || value === "") {
+    return "";
+  }
+  if (typeof value !== "string" || value.length > maxLength) {
+    throw new Error(`Invalid ${fieldName}.`);
+  }
+  return value.trim();
 }
 
 function validateAnswers(answers) {
