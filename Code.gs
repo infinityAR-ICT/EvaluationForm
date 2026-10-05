@@ -1,5 +1,5 @@
 const SPREADSHEET_ID = "12UGu3FmqVhGbjwCyJUiR4owIqwU6klFNB0yzU1SRH-w";
-const OPTIONS = ["Option 1", "Option 2", "Option 3", "Option 4"];
+const OPTIONS = ["Excellent", "Standard", "Good", "Satisfactory", "Poor"];
 const SECTION_COUNT = 30;
 const QUESTIONS_PER_SECTION = 4;
 const MAX_COMMENT_LENGTH = 45000;
@@ -10,6 +10,12 @@ const VALID_HOUSES = [
   "Shariatullah House"
 ];
 const VALID_FORMS = ["A", "B"];
+const QUESTION_HEADERS = [
+  "Subject Knowledge",
+  "Teaching Skill",
+  "Sincerity towards The Cadets",
+  "Personality & Behaviour"
+];
 const SECTION_PHOTO_FILES = [
   "1. MRS. JAMUNA RANI BISWAS.jpg",
   "2. MD. TAUFIQUL ALAM.jpg",
@@ -58,27 +64,15 @@ function getSectionSheetNames() {
   });
 }
 
-function renameSectionSheets() {
-  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const sheetNames = getSectionSheetNames();
-  const renames = [];
-
-  for (let section = 1; section <= SECTION_COUNT; section++) {
-    const oldSheet = spreadsheet.getSheetByName(`Section ${section}`);
-    const targetSheet = spreadsheet.getSheetByName(sheetNames[section - 1]);
-    if (oldSheet && targetSheet && oldSheet.getSheetId() !== targetSheet.getSheetId()) {
-      throw new Error(`Both "Section ${section}" and "${sheetNames[section - 1]}" exist. Resolve the duplicate tabs before renaming.`);
-    }
-    if (oldSheet && !targetSheet) {
-      renames.push({sheet: oldSheet, name: sheetNames[section - 1]});
-    }
+function archiveSheet(spreadsheet, sheet, originalName) {
+  const baseName = `${originalName} - Legacy Archive`;
+  let archiveName = baseName;
+  let suffix = 2;
+  while (spreadsheet.getSheetByName(archiveName)) {
+    archiveName = `${baseName} (${suffix})`;
+    suffix++;
   }
-
-  renames.forEach(rename => {
-    rename.sheet.setName(rename.name);
-    rename.sheet.getRange(2, 4).setValue(rename.name);
-  });
-  SpreadsheetApp.flush();
+  sheet.setName(archiveName);
 }
 
 function doPost(e) {
@@ -106,31 +100,24 @@ function doPost(e) {
       let sheet = spreadsheet.getSheetByName(sheetName);
       const oldSheet = spreadsheet.getSheetByName(`Section ${section}`);
       if (sheet && oldSheet && sheet.getSheetId() !== oldSheet.getSheetId()) {
-        throw new Error(`Both "Section ${section}" and "${sheetName}" exist. Resolve the duplicate tabs before submitting.`);
+        archiveSheet(spreadsheet, oldSheet, `Section ${section}`);
       }
       if (!sheet && oldSheet) {
         oldSheet.setName(sheetName);
         sheet = oldSheet;
       }
+      const headers = buildHeaders();
+      if (sheet && sheet.getLastRow() > 0) {
+        const existingHeaders = sheet.getRange(4, 2, 1, headers.length).getValues()[0];
+        if (headers.some((header, index) => existingHeaders[index] !== header)) {
+          archiveSheet(spreadsheet, sheet, sheetName);
+          sheet = null;
+        }
+      }
       if (!sheet) {
         sheet = spreadsheet.insertSheet(sheetName);
       }
-      const headers = buildHeaders();
       const isEmpty = sheet.getLastRow() === 0;
-
-      if (!isEmpty) {
-        const responseHeaders = headers.slice(0, -5);
-        const existingHeaders = sheet.getRange(4, 1, 1, responseHeaders.length).getValues()[0];
-        if (responseHeaders.some((header, index) => existingHeaders[index] !== header)) {
-          throw new Error(`Unexpected headers in ${sheetName}.`);
-        }
-        for (let index = responseHeaders.length; index < headers.length; index++) {
-          const existingHeader = sheet.getRange(4, index + 1).getValue();
-          if (existingHeader && existingHeader !== headers[index]) {
-            throw new Error(`Unexpected ${headers[index]} column header in ${sheetName}.`);
-          }
-        }
-      }
 
       sections.push({
         sheet: sheet,
@@ -144,38 +131,27 @@ function doPost(e) {
     sections.forEach(section => {
       const sheet = section.sheet;
       if (section.isEmpty) {
-        sheet.getRange(2, 4, 1, 6).merge();
-        sheet.getRange(4, 1, 1, section.headers.length).setValues([section.headers]);
-      } else {
-        const responseHeaderCount = section.headers.length - 5;
-        for (let index = responseHeaderCount; index < section.headers.length; index++) {
-          if (!sheet.getRange(4, index + 1).getValue()) {
-            sheet.getRange(4, index + 1).setValue(section.headers[index]);
-          }
-        }
+        sheet.getRange(2, 9, 1, 6).merge();
+        sheet.getRange(4, 2, 1, section.headers.length).setValues([section.headers]);
       }
-      sheet.getRange(2, 4).setValue(section.sheetName);
-      sheet.getRange(2, 4, 1, 6)
+      sheet.getRange(2, 9).setValue(section.sheetName);
+      sheet.getRange(2, 9, 1, 6)
         .setFontWeight("bold")
         .setHorizontalAlignment("center");
-      sheet.getRange(4, 1, 1, section.headers.length)
+      sheet.getRange(4, 2, 1, section.headers.length)
         .setFontWeight("bold")
         .setHorizontalAlignment("center")
         .setVerticalAlignment("middle")
         .setWrap(true);
       sheet.setFrozenRows(4);
 
-      const rowNumber = sheet.getLastRow() + 1;
-      const row = [rowNumber - 4, submittedAt, submissionId];
+      const rowNumber = getNextResponseRow(sheet);
+      const row = [rowNumber - 4, submittedAt, className, houseName, formName,
+        safeCellText(cadetName), safeCellText(cadetNumber)];
       answersBySection[section.sectionNumber - 1].forEach(answer => {
         row.push(answer.selectedOption, safeCellText(answer.comment));
       });
-      row.push(className);
-      row.push(houseName);
-      row.push(formName);
-      row.push(safeCellText(cadetName));
-      row.push(safeCellText(cadetNumber));
-      sheet.getRange(rowNumber, 1, 1, row.length).setValues([row]);
+      sheet.getRange(rowNumber, 2, 1, row.length).setValues([row]);
     });
 
     SpreadsheetApp.flush();
@@ -194,16 +170,27 @@ function doPost(e) {
 }
 
 function buildHeaders() {
-  const headers = ["No", "Submit on", "Id"];
-  for (let question = 1; question <= QUESTIONS_PER_SECTION; question++) {
-    headers.push(`Question ${question}: Response`, "Comment");
-  }
-  headers.push("Class");
-  headers.push("House");
-  headers.push("Form");
-  headers.push("Cadet Name");
-  headers.push("Cadet Number");
+  const headers = ["No", "Submit on", "Class", "House", "Form", "Cadet Name", "Cadet Number"];
+  QUESTION_HEADERS.forEach(question => {
+    headers.push(question, "Comment");
+  });
   return headers;
+}
+
+function getNextResponseRow(sheet) {
+  const firstDataRow = 5;
+  const lastRow = sheet.getLastRow();
+  if (lastRow < firstDataRow) {
+    return firstDataRow;
+  }
+
+  const numbers = sheet.getRange(firstDataRow, 2, lastRow - firstDataRow + 1, 1).getValues();
+  for (let index = numbers.length - 1; index >= 0; index--) {
+    if (numbers[index][0] !== "" && numbers[index][0] !== null) {
+      return firstDataRow + index + 1;
+    }
+  }
+  return firstDataRow;
 }
 
 function validateClassName(className) {

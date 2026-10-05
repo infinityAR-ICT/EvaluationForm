@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Assessment Form</title>
+<title>Teacher's Evaluation Form</title>
 <link rel="icon" type="image/png" href="icon/bcc.png">
 <style>
 :root{color-scheme:light;--primary:#2563eb;--bg:#f4f7fb;--card:#fff;--text:#172033;--muted:#64748b;--border:#e8edf5;--field-border:#cfd8e6;--field-bg:#fff;--option-bg:#fff;--secondary-bg:#e8eef8;--secondary-text:#172033;--progress-bg:#e6ebf3;--photo-bg:#f8fafc;--shadow:0 4px 18px #0000000d}
@@ -47,6 +47,10 @@ button{border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:poin
 .progress{height:8px;background:var(--progress-bg);border-radius:99px;overflow:hidden;margin-top:15px}
 .progress-bar{height:100%;width:0;background:var(--primary);transition:.2s}
 .note{font-size:13px;color:var(--muted);margin-top:10px}
+.thank-you{background:var(--card);border-radius:16px;padding:48px 24px;margin:18px 0;text-align:center;box-shadow:var(--shadow)}
+.thank-you-icon{font-size:48px;color:var(--primary);margin-bottom:12px}
+.thank-you h2{margin:0 0 10px}
+.thank-you p{color:var(--muted);margin:0}
 button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
 
 .section { display:none; }
@@ -83,11 +87,14 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
       <span id="themeIcon" aria-hidden="true">🌙</span>
     </button>
   </div>
-  <div class="progress"><div id="progressBar" class="progress-bar"></div></div>
-  <div id="progressText" class="note">0 of 120 questions answered</div>
-<div id="sectionIndicator" class="section-indicator">Cadet Details</div>
+  <div id="progressSummary">
+    <div class="progress"><div id="progressBar" class="progress-bar"></div></div>
+    <div id="progressText" class="note">0 of 120 questions answered</div>
+    <div id="sectionIndicator" class="section-indicator">Cadet Details</div>
+  </div>
 </header>
 
+<div id="assessmentContent">
 <form id="assessmentForm"></form>
 
 <div class="navigation">
@@ -101,6 +108,13 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 <div id="saveStatus" class="note" role="status" aria-live="polite" style="text-align:center"></div>
 </div>
 
+<section id="thankYouPage" class="thank-you" aria-labelledby="thankYouHeading" hidden>
+  <div class="thank-you-icon" aria-hidden="true">✓</div>
+  <h2 id="thankYouHeading" tabindex="-1">Thank you!</h2>
+  <p>Your evaluation has been sent. Thank you for completing the assessment.</p>
+</section>
+</div>
+
 <script>
 const OPTIONS = ["Excellent", "Standard", "Good", "Satisfactory", "Poor", ];
 const SECTIONS = 30;
@@ -111,7 +125,7 @@ const QUESTION_TEXTS = [
   "4. Personality & Behaviour"
 ];
 const QUESTIONS_PER_SECTION = QUESTION_TEXTS.length;
-const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwdJ7Jf-0Hlj_ON2u8sIIaK0lq2F34Q96el5MbOJiHJt1AnB5KrapnXKw0SE0M93RLM/exec"
+const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwSTdp8xsDIwJIvmtYkiszPrVX8Az-IHPgRo1lg-SYyDHhL5DJg9JMhDkpJ_Dm1Ht8J/exec"
 const SECTION_PHOTOS = [
   "1. MRS. JAMUNA RANI BISWAS.jpg",
   "2. MD. TAUFIQUL ALAM.jpg",
@@ -326,13 +340,30 @@ async function saveToGoogleSheet(){
         answers:collectAnswers()
       })
     });
-    setSaveStatus("Submission sent.Thank you for completing the assessment!");
+    showThankYouPage();
   } catch(error){
     setSaveStatus(`Could not send responses: ${error.message}`, true);
   } finally{
     submissionInProgress = false;
   }
 }
+
+function showThankYouPage(){
+  document.getElementById("assessmentContent").hidden = true;
+  document.getElementById("progressSummary").hidden = true;
+  const thankYouPage = document.getElementById("thankYouPage");
+  thankYouPage.hidden = false;
+  document.getElementById("thankYouHeading").focus();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function finishAssessment(){
+  if(!currentSectionComplete()){
+    return;
+  }
+  saveToGoogleSheet();
+}
+
 let currentSection = 1;
 
 function showSection(sectionNumber){
@@ -353,7 +384,7 @@ function showSection(sectionNumber){
   const nextBtn = document.getElementById("nextBtn");
   if(currentSection === SECTIONS + 1){
     nextBtn.textContent = "Finish";
-    nextBtn.onclick = saveToGoogleSheet;
+    nextBtn.onclick = finishAssessment;
   } else {
     nextBtn.textContent = "Next";
     nextBtn.onclick = nextSection;
