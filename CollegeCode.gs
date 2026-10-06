@@ -1,6 +1,6 @@
 const COLLEGE_SPREADSHEET_ID = "1k4XTM6-iiD3hhX6s_JCvjJhE1ottpiyL-SZmOOYGlIk";
 const COLLEGE_SHEET_NAME = "College Evaluation";
-const COLLEGE_OPTIONS = ["Excellent", "Standard", "Good", "Satisfactory", "Poor"];
+const COLLEGE_VALID_OPTION_VALUES = [1, 2, 3, 4, 5];
 const COLLEGE_MAX_COMMENT_LENGTH = 45000;
 const COLLEGE_VALID_CLASSES = ["VII", "VIII", "IX", "X", "XI", "XII"];
 const COLLEGE_VALID_HOUSES = [
@@ -198,12 +198,12 @@ function collegeValidateAnswers(answers) {
   COLLEGE_RATING_FIELDS.forEach(field => {
     const rating = answers.ratings[field.key];
     const comment = answers.comments[field.key];
-    if (!COLLEGE_OPTIONS.includes(rating)) {
+    if (!COLLEGE_VALID_OPTION_VALUES.includes(rating)) {
       throw new Error(`Invalid or missing ${field.header}.`);
     }
     if (typeof comment !== "string"
       || comment.length > COLLEGE_MAX_COMMENT_LENGTH
-      || ((rating === "Satisfactory" || rating === "Poor") && !comment.trim())) {
+      || (rating <= 3 && !comment.trim())) {
       throw new Error(`Invalid or missing comment for ${field.header}.`);
     }
     ratings[field.key] = rating;

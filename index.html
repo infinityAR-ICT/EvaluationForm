@@ -157,13 +157,23 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 </div>
 
 <script>
-const OPTIONS = ["Excellent", "Standard", "Good", "Satisfactory", "Poor", ];
+const OPTIONS = [
+  "Out Standing",
+  "Excellent",
+  "Above Average",
+  "Satisfactory",
+  "Poor"
+];
+const OPTION_VALUES = Object.fromEntries(OPTIONS.map((option, index) => [
+  option,
+  OPTIONS.length - index
+]));
 const OPTION_EMOJIS = {
-  Excellent: "🌟",
-  Standard: "⭐",
-  Good: "👍",
-  Satisfactory: "👌",
-  Poor: "👎"
+  "Out Standing": "🌟",
+  "Excellent": "⭐",
+  "Above Average": "👍",
+  "Satisfactory": "👌",
+  "Poor": "👎"
 };
 const SECTIONS = 30;
 const COLLEGE_RATING_QUESTIONS = [
@@ -201,8 +211,8 @@ const EVALUATION_COPY = {
     otherEvaluationLabel: "Start College Evaluation"
   }
 };
-const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyk1SLXGoLjAlSyAH7j3nkPcJctUXtM0PKanPx9LMvLWiXioL9uWxsyE9HHQMA3hh5D/exec";
-const COLLEGE_GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzLa95Qldqp4X5NDpMxvAmzrPq0BE5UxQ6xRNQsMmEl3NRASC0wdrbeLzKY1p9J_lmW/exec";
+const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZRAZubuFkVnMT0iyxHoRWzzEBrr4MjIsw-JtFIrd0KEdNLER2BOKjhWYrauXibG0X/exec";
+const COLLEGE_GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwfXI1h5NqG_m9SUijHwcJ8SWBir4Hm1Cc69zfitpOEPC3ujaB79vWaw9FvtAZJQzS_/exec";
 const SECTION_PHOTOS = [
   "1. MRS. JAMUNA RANI BISWAS.jpg",
   "2. MD. TAUFIQUL ALAM.jpg",
@@ -364,28 +374,23 @@ function buildForm(){
 function toggleCommentState(id, selectedValue){
   const commentWrap = document.getElementById(id + "-comment-wrap");
   const commentField = document.getElementById(id + "-comment");
-  const isSatisfactory = selectedValue === "Satisfactory";
-  const isPoor = selectedValue === "Poor";
+  const requiresComment = ratingRequiresComment(selectedValue);
 
-  if (isPoor) {
-    commentWrap.classList.add("show");
-    commentField.setAttribute("required", "required");
-  } 
-   else if (isSatisfactory) {
-    commentWrap.classList.add("show");
-    commentField.setAttribute("required", "required");
-  }
-  else {
-    commentWrap.classList.remove("show");
-    commentField.removeAttribute("required");
+  commentWrap.classList.toggle("show", requiresComment);
+  commentField.required = requiresComment;
+  if(!requiresComment){
     commentField.value = "";
   }
+}
+
+function ratingRequiresComment(value){
+  return value === "Above Average" || value === "Satisfactory" || value === "Poor";
 }
 
 function toggleCollegeComment(key, selectedValue){
   const commentWrap = document.getElementById(`college-${key}-comment-wrap`);
   const commentField = document.getElementById(`college-${key}-comment`);
-  const requiresComment = selectedValue === "Satisfactory" || selectedValue === "Poor";
+  const requiresComment = ratingRequiresComment(selectedValue);
   commentWrap.classList.toggle("show", requiresComment);
   commentField.required = requiresComment;
   if(!requiresComment){
@@ -430,7 +435,7 @@ function collectAnswers(){
         section: s,
         question: q,
         questionText: QUESTION_TEXTS[q - 1],
-        selectedOption: selected ? selected.value : "",
+        selectedOption: selected ? OPTION_VALUES[selected.value] : "",
         comment
       });
     }
@@ -469,7 +474,7 @@ async function saveToGoogleSheet(){
       collegeAnswers: selectedEvaluationType === "college" ? {
         ratings: Object.fromEntries(COLLEGE_RATING_QUESTIONS.map(question => [
           question.key,
-          document.querySelector(`input[name="college-${question.key}"]:checked`)?.value || ""
+          OPTION_VALUES[document.querySelector(`input[name="college-${question.key}"]:checked`)?.value] || ""
         ])),
         comments: Object.fromEntries(COLLEGE_RATING_QUESTIONS.map(question => [
           question.key,
@@ -638,7 +643,7 @@ function currentSectionComplete(){
         return false;
       }
       const commentField = document.getElementById(`college-${question.key}-comment`);
-      if((rating.value === "Satisfactory" || rating.value === "Poor") && !commentField.value.trim()){
+      if(ratingRequiresComment(rating.value) && !commentField.value.trim()){
         alert(`Please enter a comment for Question ${question.number} when selecting ${rating.value}.`);
         commentField.focus();
         return false;
@@ -659,19 +664,16 @@ function currentSectionComplete(){
     const commentField = document.getElementById(`s${questionSection}q${q}-comment`);
 
     if(!radio){
+      alert(`Please select an option for ${QUESTION_TEXTS[q - 1]} before moving to the next section.`);
+      document.querySelector(`input[name="s${questionSection}q${q}"]`).focus();
       return false;
     }
 
-    if(radio.value === "Poor" && !commentField.value.trim()){
-      alert("Please enter a comment for Poor selections before moving to the next section.");
+    if(ratingRequiresComment(radio.value) && !commentField.value.trim()){
+      alert(`Please enter a comment for ${radio.value} selections before moving to the next section.`);
       commentField.focus();
       return false;
     }
-     else if(radio.value === "Satisfactory" && !commentField.value.trim()){
-       alert("Please enter a comment for Satisfactory selections before moving to the next section.");
-       commentField.focus();
-       return false;
-     }
   }
   return true;
 }

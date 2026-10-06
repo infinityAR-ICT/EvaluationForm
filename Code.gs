@@ -1,5 +1,5 @@
 const SPREADSHEET_ID = "12UGu3FmqVhGbjwCyJUiR4owIqwU6klFNB0yzU1SRH-w";
-const OPTIONS = ["Excellent", "Standard", "Good", "Satisfactory", "Poor"];
+const VALID_OPTION_VALUES = [1, 2, 3, 4, 5];
 const SECTION_COUNT = 30;
 const QUESTIONS_PER_SECTION = 4;
 const MAX_COMMENT_LENGTH = 45000;
@@ -260,8 +260,8 @@ function validateAnswers(answers) {
       || typeof answer.questionText !== "string"
       || typeof answer.comment !== "string"
       || answer.comment.length > MAX_COMMENT_LENGTH
-      || !OPTIONS.includes(answer.selectedOption)
-      || ((answer.selectedOption === "Satisfactory" || answer.selectedOption === "Poor")
+      || !VALID_OPTION_VALUES.includes(answer.selectedOption)
+      || (answer.selectedOption <= 3
         && !answer.comment.trim())) {
       throw new Error(`Invalid answer at row ${index + 1}.`);
     }
