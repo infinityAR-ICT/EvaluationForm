@@ -1,4 +1,4 @@
-const COLLEGE_SPREADSHEET_ID = "12UGu3FmqVhGbjwCyJUiR4owIqwU6klFNB0yzU1SRH-w";
+const COLLEGE_SPREADSHEET_ID = "1k4XTM6-iiD3hhX6s_JCvjJhE1ottpiyL-SZmOOYGlIk";
 const COLLEGE_SHEET_NAME = "College Evaluation";
 const COLLEGE_OPTIONS = ["Excellent", "Standard", "Good", "Satisfactory", "Poor"];
 const COLLEGE_MAX_COMMENT_LENGTH = 45000;

@@ -151,7 +151,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 <section id="thankYouPage" class="thank-you" aria-labelledby="thankYouHeading" hidden>
   <div class="thank-you-icon" aria-hidden="true">✓</div>
   <h2 id="thankYouHeading" tabindex="-1">Thank you!</h2>
-  <p>Your evaluation has been sent. Thank you for completing the assessment.</p>
+  <p id="thankYouMessage">Your evaluation has been sent. Thank you for completing the assessment.</p>
   <button type="button" id="otherEvaluationButton" class="primary other-evaluation-button" onclick="startOtherEvaluation()"></button>
 </section>
 </div>
@@ -183,8 +183,26 @@ const QUESTION_TEXTS = [
   "4. Personality & Behaviour"
 ];
 const QUESTIONS_PER_SECTION = QUESTION_TEXTS.length;
+const EVALUATION_COPY = {
+  college: {
+    title: "College Evaluation",
+    formTitle: "College Evaluation Form",
+    progressLabel: "College Evaluation",
+    thankYouTitle: "Thank you for completing the College Evaluation!",
+    thankYouMessage: "Your College Evaluation has been sent. Thank you for your feedback.",
+    otherEvaluationLabel: "Start Teacher's Evaluation"
+  },
+  teacher: {
+    title: "Teacher's Evaluation",
+    formTitle: "Teacher's Evaluation Form",
+    progressLabel: "Teacher's Evaluation",
+    thankYouTitle: "Thank you for completing the Teacher's Evaluation!",
+    thankYouMessage: "Your Teacher's Evaluation has been sent. Thank you for your feedback.",
+    otherEvaluationLabel: "Start College Evaluation"
+  }
+};
 const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyk1SLXGoLjAlSyAH7j3nkPcJctUXtM0PKanPx9LMvLWiXioL9uWxsyE9HHQMA3hh5D/exec";
-const COLLEGE_GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzM-SQjl1XCv2opq99PFHOfrUubij5JY6cuKI5AiRMJCPYLLTNX69buqO8S8PdJuzS3/exec";
+const COLLEGE_GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwPXX6D9TFaKGvw51zjcLFNtHzRA31y5RjtY50CZHRh0AUPKS3qvmA48r_vnt6xg4A/exec";
 const SECTION_PHOTOS = [
   "1. MRS. JAMUNA RANI BISWAS.jpg",
   "2. MD. TAUFIQUL ALAM.jpg",
@@ -306,7 +324,8 @@ function buildForm(){
     }
     html += `</section>`;
   }
-  html += `<section class="section">`;
+  html += `<section class="section">
+    <div class="section-title college-section-title"></div>`;
   COLLEGE_RATING_QUESTIONS.forEach(question => {
     html += `<div class="question">
       <div class="qtext">${question.number}. ${question.text}</div>
@@ -475,10 +494,11 @@ async function saveToGoogleSheet(){
 function showThankYouPage(){
   document.getElementById("assessmentContent").hidden = true;
   document.getElementById("progressSummary").hidden = true;
+  const copy = EVALUATION_COPY[selectedEvaluationType];
   const thankYouPage = document.getElementById("thankYouPage");
-  document.getElementById("otherEvaluationButton").textContent = selectedEvaluationType === "college"
-    ? "Start Teacher's Evaluation"
-    : "Start College Evaluation";
+  document.getElementById("thankYouHeading").textContent = copy.thankYouTitle;
+  document.getElementById("thankYouMessage").textContent = copy.thankYouMessage;
+  document.getElementById("otherEvaluationButton").textContent = copy.otherEvaluationLabel;
   thankYouPage.hidden = false;
   document.getElementById("thankYouHeading").focus();
   window.scrollTo({top:0, behavior:"smooth"});
@@ -523,9 +543,16 @@ function showSection(sectionNumber){
   const isTeacherPage = currentSection >= 3 && currentSection <= SECTIONS + 2;
   document.body.classList.toggle("college-evaluation-page", isCollegePage);
   document.body.classList.toggle("teacher-evaluation-page", isTeacherPage);
-  document.getElementById("formTitle").textContent = isCollegePage
-    ? "College Evaluation Form"
-    : isTeacherPage ? "Teacher's Evaluation Form" : "BCC Evaluation Form";
+  const evaluationCopy = EVALUATION_COPY[selectedEvaluationType];
+  const formTitle = isCollegePage || isTeacherPage
+    ? evaluationCopy.formTitle
+    : "BCC Evaluation Form";
+  document.getElementById("formTitle").textContent = formTitle;
+  document.title = formTitle;
+  const collegeHeading = document.querySelector(".college-section-title");
+  if(collegeHeading){
+    collegeHeading.textContent = evaluationCopy?.title || "College Evaluation";
+  }
 
   document.querySelectorAll(".section").forEach((section, index)=>{
     section.classList.toggle("active", index + 1 === currentSection);
@@ -535,8 +562,8 @@ function showSection(sectionNumber){
   const teacherLastPage = SECTIONS + 2;
   const collegePage = SECTIONS + 3;
   document.getElementById("sectionIndicator").textContent = isTeacherPage
-    ? `Section ${currentSection - 2} of ${SECTIONS}`
-    : isCollegePage ? "College Evaluation" : currentSection === 1 ? "Cadet Details" : "Choose Evaluation";
+    ? `${evaluationCopy.progressLabel} — Section ${currentSection - 2} of ${SECTIONS}`
+    : isCollegePage ? `${evaluationCopy.progressLabel} — Section 1 of 1` : currentSection === 1 ? "Cadet Details" : "Choose Evaluation";
   document.getElementById("progressSummary").hidden = !isTeacherPage;
 
   const prevBtn = document.getElementById("prevBtn");
