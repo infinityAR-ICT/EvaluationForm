@@ -20,15 +20,34 @@ const COLLEGE_RATING_FIELDS = [
   {key: "collegeAdjutantSincerityRating", header: "College Adjutant Sincerity Rating"}
 ];
 
+function setupCollegeEvaluationSheet() {
+  const spreadsheet = SpreadsheetApp.openById(COLLEGE_SPREADSHEET_ID);
+  const sheet = collegeEnsureSheet(spreadsheet);
+  SpreadsheetApp.flush();
+  const result = {
+    spreadsheetId: spreadsheet.getId(),
+    spreadsheetName: spreadsheet.getName(),
+    sheetName: sheet.getName(),
+    headers: collegeBuildHeaders()
+  };
+  console.log(JSON.stringify(result));
+  return result;
+}
+
 function doPost(e) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
   try {
-    if (!e || !e.postData || typeof e.postData.contents !== "string") {
+    const requestBody = e && e.parameter && typeof e.parameter.payload === "string"
+      ? e.parameter.payload
+      : e && e.postData && typeof e.postData.contents === "string"
+        ? e.postData.contents
+        : "";
+    if (!requestBody) {
       throw new Error("Missing request body.");
     }
-    const payload = JSON.parse(e.postData.contents);
+    const payload = JSON.parse(requestBody);
     if (payload.evaluationType && payload.evaluationType !== "college") {
       throw new Error("Invalid evaluation type.");
     }
@@ -48,13 +67,36 @@ function doPost(e) {
     return collegeJsonResponse({ok: true, rowsAdded: 1});
   } catch (error) {
     console.error(error);
-    return collegeJsonResponse({ok: false, error: "The response could not be saved."});
+    return collegeJsonResponse({
+      ok: false,
+      error: "The response could not be saved. Check the College Apps Script execution log for details."
+    });
   } finally {
     lock.releaseLock();
   }
 }
 
 function collegeSaveSubmission(spreadsheet, submission) {
+  const sheet = collegeEnsureSheet(spreadsheet);
+  const rowNumber = collegeGetNextResponseRow(sheet);
+  const row = [
+    rowNumber - 4,
+    submission.submittedAt,
+    submission.className,
+    submission.houseName,
+    submission.formName,
+    collegeSafeCellText(submission.cadetName),
+    collegeSafeCellText(submission.cadetNumber),
+    ...COLLEGE_RATING_FIELDS.flatMap(field => [
+      submission.answers.ratings[field.key],
+      collegeSafeCellText(submission.answers.comments[field.key])
+    ]),
+    collegeSafeCellText(submission.answers.missionDescription)
+  ];
+  sheet.getRange(rowNumber, 2, 1, row.length).setValues([row]);
+}
+
+function collegeEnsureSheet(spreadsheet) {
   let sheet = spreadsheet.getSheetByName(COLLEGE_SHEET_NAME);
   if (!sheet) {
     sheet = spreadsheet.insertSheet(COLLEGE_SHEET_NAME);
@@ -79,24 +121,9 @@ function collegeSaveSubmission(spreadsheet, submission) {
     .setVerticalAlignment("middle")
     .setWrap(true);
   sheet.setFrozenRows(4);
-  sheet.setIndex(spreadsheet.getSheets().length);
-
-  const rowNumber = collegeGetNextResponseRow(sheet);
-  const row = [
-    rowNumber - 4,
-    submission.submittedAt,
-    submission.className,
-    submission.houseName,
-    submission.formName,
-    collegeSafeCellText(submission.cadetName),
-    collegeSafeCellText(submission.cadetNumber),
-    ...COLLEGE_RATING_FIELDS.flatMap(field => [
-      submission.answers.ratings[field.key],
-      collegeSafeCellText(submission.answers.comments[field.key])
-    ]),
-    collegeSafeCellText(submission.answers.missionDescription)
-  ];
-  sheet.getRange(rowNumber, 2, 1, row.length).setValues([row]);
+  spreadsheet.setActiveSheet(sheet);
+  spreadsheet.moveActiveSheet(spreadsheet.getSheets().length);
+  return sheet;
 }
 
 function collegeBuildHeaders() {

@@ -202,7 +202,7 @@ const EVALUATION_COPY = {
   }
 };
 const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyk1SLXGoLjAlSyAH7j3nkPcJctUXtM0PKanPx9LMvLWiXioL9uWxsyE9HHQMA3hh5D/exec";
-const COLLEGE_GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwPXX6D9TFaKGvw51zjcLFNtHzRA31y5RjtY50CZHRh0AUPKS3qvmA48r_vnt6xg4A/exec";
+const COLLEGE_GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzLa95Qldqp4X5NDpMxvAmzrPq0BE5UxQ6xRNQsMmEl3NRASC0wdrbeLzKY1p9J_lmW/exec";
 const SECTION_PHOTOS = [
   "1. MRS. JAMUNA RANI BISWAS.jpg",
   "2. MD. TAUFIQUL ALAM.jpg",
@@ -458,34 +458,46 @@ async function saveToGoogleSheet(){
   submissionInProgress = true;
   setSaveStatus("Sending responses to Google Sheets...");
   try{
-    await fetch(webAppUrl, {
+    const submission = {
+      evaluationType: selectedEvaluationType,
+      className: document.getElementById("className").value,
+      houseName: document.getElementById("houseName").value,
+      formName: document.getElementById("formName").value,
+      cadetName: document.getElementById("cadetName").value.trim(),
+      cadetNumber: document.getElementById("cadetNumber").value.trim(),
+      answers: selectedEvaluationType === "teacher" ? collectAnswers() : undefined,
+      collegeAnswers: selectedEvaluationType === "college" ? {
+        ratings: Object.fromEntries(COLLEGE_RATING_QUESTIONS.map(question => [
+          question.key,
+          document.querySelector(`input[name="college-${question.key}"]:checked`)?.value || ""
+        ])),
+        comments: Object.fromEntries(COLLEGE_RATING_QUESTIONS.map(question => [
+          question.key,
+          document.getElementById(`college-${question.key}-comment`).value.trim()
+        ])),
+        missionDescription: document.getElementById("collegeMissionDescription").value.trim()
+      } : undefined
+    };
+    const isCollegeSubmission = selectedEvaluationType === "college";
+    const response = await fetch(webAppUrl, {
       method: "POST",
-      mode: "no-cors",
-      headers: {"Content-Type":"text/plain;charset=utf-8"},
-      body: JSON.stringify({
-        evaluationType: selectedEvaluationType,
-        className: document.getElementById("className").value,
-        houseName: document.getElementById("houseName").value,
-        formName: document.getElementById("formName").value,
-        cadetName: document.getElementById("cadetName").value.trim(),
-        cadetNumber: document.getElementById("cadetNumber").value.trim(),
-        answers: selectedEvaluationType === "teacher" ? collectAnswers() : undefined,
-        collegeAnswers: selectedEvaluationType === "college" ? {
-          ratings: Object.fromEntries(COLLEGE_RATING_QUESTIONS.map(question => [
-            question.key,
-            document.querySelector(`input[name="college-${question.key}"]:checked`)?.value || ""
-          ])),
-          comments: Object.fromEntries(COLLEGE_RATING_QUESTIONS.map(question => [
-            question.key,
-            document.getElementById(`college-${question.key}-comment`).value.trim()
-          ])),
-          missionDescription: document.getElementById("collegeMissionDescription").value.trim()
-        } : undefined
-      })
+      mode: "cors",
+      headers: {
+        "Content-Type": isCollegeSubmission
+          ? "application/x-www-form-urlencoded;charset=UTF-8"
+          : "text/plain;charset=utf-8"
+      },
+      body: isCollegeSubmission
+        ? new URLSearchParams({payload: JSON.stringify(submission)}).toString()
+        : JSON.stringify(submission)
     });
+    const result = await response.json();
+    if(!response.ok || result.ok !== true){
+      throw new Error(result.error || "The server rejected the response.");
+    }
     showThankYouPage();
   } catch(error){
-    setSaveStatus(`Could not send responses: ${error.message}`, true);
+    setSaveStatus(`Could not save the evaluation: ${error.message}`, true);
   } finally{
     submissionInProgress = false;
   }

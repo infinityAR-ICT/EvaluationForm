@@ -1,12 +1,12 @@
 # EvaluationForm
 
-Evaluation form with separate **College Evaluation** and **Teacher's Evaluation** paths. Teacher's Evaluation submissions are handled by `Code.gs`, and College Evaluation submissions by the standalone `CollegeCode.gs` Apps Script project. Both can save to the configured Google Sheet. The scripts do not create an XLSX file or use Google Drive OAuth.
+Evaluation form with separate **College Evaluation** and **Teacher's Evaluation** paths. Teacher's Evaluation submissions are handled by `Code.gs`, and College Evaluation submissions by the standalone `CollegeCode.gs` Apps Script project. Each script writes to its configured spreadsheet; the College script targets the College Evaluation spreadsheet ID in `CollegeCode.gs`. The scripts do not create an XLSX file or use Google Drive OAuth.
 
 ## Set up Google Sheets saving
 
-1. Open the destination spreadsheet: [Evaluation responses](https://docs.google.com/spreadsheets/d/12UGu3FmqVhGbjwCyJUiR4owIqwU6klFNB0yzU1SRH-w/edit).
+1. Open the destination spreadsheet for Teacher's Evaluation: [Evaluation responses](https://docs.google.com/spreadsheets/d/12UGu3FmqVhGbjwCyJUiR4owIqwU6klFNB0yzU1SRH-w/edit). College Evaluation uses the separate [College Evaluation spreadsheet](https://docs.google.com/spreadsheets/d/1k4XTM6-iiD3hhX6s_JCvjJhE1ottpiyL-SZmOOYGlIk/edit).
 2. For Teacher's Evaluation, open **Extensions → Apps Script** in the destination spreadsheet. Replace the script code with the contents of `Code.gs`, then save.
-3. For College Evaluation, create a separate standalone Apps Script project and paste the contents of `CollegeCode.gs`. Keep it separate from the teacher script because both scripts define a `doPost` web-app entry point.
+3. For College Evaluation, create a separate standalone Apps Script project and paste the contents of `CollegeCode.gs`. Keep it separate from the teacher script because both scripts define a `doPost` web-app entry point. In the College project, select and run `setupCollegeEvaluationSheet` once; approve spreadsheet access and check its execution log for the spreadsheet ID, name, worksheet name, and expected headers.
 4. Deploy each Apps Script project as a web app. Set **Execute as** to your account and **Who has access** to **Anyone**, then deploy and complete Google's authorization prompts.
 5. Copy each deployment's `/exec` URL into the corresponding constant in `index.html`: teacher URL in `GOOGLE_SHEETS_WEB_APP_URL`; College URL in `COLLEGE_GOOGLE_SHEETS_WEB_APP_URL`. Publish the updated form. When updating an existing deployment, select **New version** and retain its `/exec` URL.
 6. Submit a Teacher's Evaluation response and check the spreadsheet. Teacher submissions create or use one worksheet per teacher, named from that teacher's photo filename. Each teacher tab follows `Sample.xlsx`: the teacher name is merged across I2:N2; headers are in B4:P4 (`No`, `Submit on`, `Class`, `House`, `Form`, `Cadet Name`, `Cadet Number`, then each criterion and its `Comment`); submissions are written starting on row 5. College submissions create or use a `College Evaluation` worksheet as the final tab, with headers in B4:Y4 and responses starting on row 5.
@@ -17,4 +17,4 @@ Older rows in the previous `Responses` tab are not moved or deleted. They can be
 
 The public web app URL is not authentication. Anyone who obtains it can submit rows to the spreadsheet as the deploying account, potentially causing unwanted submissions or using your Apps Script quota. Share the form and endpoint carefully, monitor the sheet, and disable or redeploy the web app if it is abused. An anonymous endpoint cannot provide the protections of user sign-in.
 
-The browser uses a cross-origin `no-cors` request because Apps Script web apps do not expose their response to this page. The form reports that the request was sent, but cannot confirm the server-side result; verify the relevant teacher worksheet or the `College Evaluation` tab if a submission does not appear.
+The form reads the JSON result returned by each Apps Script web app and shows the thank-you page only when the server confirms the save. If a submission fails, check the corresponding Apps Script execution log and verify the target worksheet.
