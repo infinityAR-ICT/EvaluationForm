@@ -52,6 +52,7 @@ body.teacher-evaluation-page .section-indicator{text-align:center}
 .person-photo{width:72px;height:72px;object-fit:cover;border-radius:50%;border:2px solid var(--border);background:var(--photo-bg)}
 .person-meta{display:flex;flex-direction:column;gap:4px}
 .section-title{font-size:20px;font-weight:700}
+.cadet-details-reminder{color:#dc2626}
 #assessmentForm .section.active:first-child > .section-title{text-align:center}
 body.evaluation-choice-page #assessmentForm .section.active > .section-title{text-align:center}
 .person-name{font-size:16px;color:var(--muted);font-weight:600}
@@ -184,7 +185,10 @@ const COLLEGE_RATING_QUESTIONS = [
   {number: 6, key: "formMasterSincerityRating", text: "How is the sincerity of the form master?"},
   {number: 7, key: "houseMasterDedicationRating", text: "How is the sincerity and dedication of the house master?"},
   {number: 8, key: "hospitalFacilitiesRating", text: "How are the hospital facilities and environment?"},
-  {number: 9, key: "collegeAdjutantSincerityRating", text: "How sincere is the college adjutant?"}
+  {number: 9, key: "armedForcesViewRating", text: "Your view about the Armed Forces"},
+  {number: 10, key: "collegeAdjutantSincerityRating", text: "Your view about The Adjutant"},
+  {number: 11, key: "vicePrincipalViewRating", text: "Your view about The Vice-Principal"},
+  {number: 12, key: "principalViewRating", text: "Your view about The Principal"}
 ];
 const QUESTION_TEXTS = [
   "1. Subject Knowledge",
@@ -212,7 +216,7 @@ const EVALUATION_COPY = {
   }
 };
 const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZRAZubuFkVnMT0iyxHoRWzzEBrr4MjIsw-JtFIrd0KEdNLER2BOKjhWYrauXibG0X/exec";
-const COLLEGE_GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwfXI1h5NqG_m9SUijHwcJ8SWBir4Hm1Cc69zfitpOEPC3ujaB79vWaw9FvtAZJQzS_/exec";
+const COLLEGE_GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwYuEB4POxUvuyGKMMDOSFzTtzVqhMVL4mjEx8uchatzoi0Hpg4jbI_naepXFA8_RHm/exec";
 const SECTION_PHOTOS = [
   "1. MRS. JAMUNA RANI BISWAS.jpg",
   "2. MD. TAUFIQUL ALAM.jpg",
@@ -256,7 +260,7 @@ function getSectionPhotoName(index){
 function buildForm(){
   const form = document.getElementById("assessmentForm");
   let html = `<section class="section">
-    <div class="section-title">Cadet Details</div>
+    <div class="section-title cadet-details-reminder">Cadets are encouraged to mention cadet number and name, but it is not mandatory.</div>
     <div class="student-details">
       <div class="class-field">
         <label for="className">Class <span aria-hidden="true">*</span></label>
