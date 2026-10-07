@@ -15,7 +15,7 @@ header{background:var(--card);border-radius:16px;padding:24px;margin-bottom:18px
 .header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
 .header-brand{display:flex;align-items:center;gap:16px}
 .school-logo{width:68px;height:68px;object-fit:contain;flex-shrink:0}
-h1{margin:0 0 8px;font-size:28px}
+h1{margin:0 0 8px;font-size:clamp(20px,calc(2.8vw + 8px),28px);line-height:1.2}
 body.cadet-details-page .header-top{justify-content:center;position:relative}
 body.cadet-details-page .header-brand{justify-content:center;text-align:center}
 body.cadet-details-page .header-brand > div{text-align:center}
@@ -51,11 +51,11 @@ body.teacher-evaluation-page .section-indicator{text-align:center}
 .section-person{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .person-photo{width:72px;height:72px;object-fit:cover;border-radius:50%;border:2px solid var(--border);background:var(--photo-bg)}
 .person-meta{display:flex;flex-direction:column;gap:4px}
-.section-title{font-size:20px;font-weight:700}
+.section-title{font-size:clamp(16px,2.6vw,20px);font-weight:700;line-height:1.3}
 .cadet-details-reminder{color:#dc2626}
 #assessmentForm .section.active:first-child > .section-title{text-align:center}
 body.evaluation-choice-page #assessmentForm .section.active > .section-title{text-align:center}
-.person-name{font-size:16px;color:var(--muted);font-weight:600}
+.person-name{font-size:clamp(15px,2.1vw,16px);color:var(--muted);font-weight:600}
 .student-details{display:flex;gap:16px;flex-wrap:wrap;margin:0 0 20px}
 .class-field{flex:1 1 240px}
 .class-field label{display:block;font-weight:700;margin-bottom:8px}
@@ -63,7 +63,7 @@ body.evaluation-choice-page #assessmentForm .section.active > .section-title{tex
 .class-field input{width:100%;border:1px solid var(--field-border);border-radius:10px;padding:11px 12px;background:var(--field-bg);color:var(--text);font:inherit}
 .question{padding:16px 0;border-bottom:1px solid var(--border)}
 .question:last-child{border-bottom:0}
-.qtext{font-weight:600;margin-bottom:12px}
+.qtext{font-size:clamp(15px,2.1vw,16px);font-weight:600;line-height:1.4;margin-bottom:12px}
 .options{display:flex;gap:10px;flex-wrap:wrap}
 .option{border:1px solid var(--field-border);border-radius:10px;padding:10px 14px;cursor:pointer;background:var(--option-bg)}
 .option:hover{border-color:var(--primary)}
@@ -87,7 +87,7 @@ button{border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:poin
 .note{font-size:13px;color:var(--muted);margin-top:10px}
 .thank-you{background:var(--card);border-radius:16px;padding:48px 24px;margin:18px 0;text-align:center;box-shadow:var(--shadow)}
 .thank-you-icon{font-size:48px;color:var(--primary);margin-bottom:12px}
-.thank-you h2{margin:0 0 10px}
+.thank-you h2{font-size:clamp(20px,3.5vw,24px);line-height:1.2;margin:0 0 10px}
 .thank-you p{color:var(--muted);margin:0}
 .thank-you .other-evaluation-button{margin-top:24px}
 button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
@@ -106,9 +106,22 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
   font-weight:700;
   margin-top:8px;
   color:#2563eb;
+  font-size:clamp(15px,2.1vw,16px);
 }
 
-@media(max-width:600px){.container{padding:12px}.section{padding:16px}h1{font-size:23px}.header-top{align-items:center}.header-brand{gap:10px}.school-logo{width:52px;height:52px}.actions-credit{font-size:11px}}
+h1,h2,.section-title,.qtext,.person-name,.section-indicator{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.header-brand>div,.person-meta{min-width:0}
+.section-person{min-width:0}
+
+@media(max-width:600px){
+  .container{padding:12px}
+  .section{padding:16px}
+  .header-top{align-items:center}
+  .header-brand{width:100%;min-width:0;gap:10px;padding:0 48px}
+  .header-brand>div{max-width:100%}
+  .school-logo{width:52px;height:52px}
+  .actions-credit{font-size:11px}
+}
 </style>
 </head>
 <body>
