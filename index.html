@@ -192,16 +192,16 @@ const OPTION_EMOJIS = {
 const SECTIONS = 30;
 const COLLEGE_RATING_QUESTIONS = [
   {number: 1, key: "environmentRating", text: "How is the current college environment for supporting everyone's personal development?"},
-  {number: 3, key: "educationDevelopmentRating", text: "How effective are the overall measures taken for the development of education?"},
-  {number: 4, key: "diningQualityRating", text: "How is the quality of cadet dining and food?"},
-  {number: 5, key: "houseEnvironmentRating", text: "How is the current environment of the house?"},
-  {number: 6, key: "formMasterSincerityRating", text: "How is the sincerity of the form master?"},
-  {number: 7, key: "houseMasterDedicationRating", text: "How is the sincerity and dedication of the house master?"},
-  {number: 8, key: "hospitalFacilitiesRating", text: "How are the hospital facilities and environment?"},
-  {number: 9, key: "armedForcesViewRating", text: "Your view about the Armed Forces"},
-  {number: 10, key: "collegeAdjutantSincerityRating", text: "Your view about The Adjutant"},
-  {number: 11, key: "vicePrincipalViewRating", text: "Your view about The Vice-Principal"},
-  {number: 12, key: "principalViewRating", text: "Your view about The Principal"}
+  {number: 4, key: "educationDevelopmentRating", text: "How effective are the overall measures taken for the development of education?"},
+  {number: 5, key: "diningQualityRating", text: "How is the quality of cadet dining and food?"},
+  {number: 6, key: "houseEnvironmentRating", text: "How is the current environment of the house?"},
+  {number: 7, key: "formMasterSincerityRating", text: "How is the sincerity of the form master?"},
+  {number: 8, key: "houseMasterDedicationRating", text: "How is the sincerity and dedication of the house master?"},
+  {number: 9, key: "hospitalFacilitiesRating", text: "How are the hospital facilities and environment?"},
+  {number: 10, key: "armedForcesViewRating", text: "Your view about the Armed Forces"},
+  {number: 11, key: "collegeAdjutantSincerityRating", text: "Your view about The Adjutant"},
+  {number: 12, key: "vicePrincipalViewRating", text: "Your view about The Vice-Principal"},
+  {number: 13, key: "principalViewRating", text: "Your view about The Principal"}
 ];
 const QUESTION_TEXTS = [
   "1. Subject Knowledge",
@@ -229,7 +229,7 @@ const EVALUATION_COPY = {
   }
 };
 const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZRAZubuFkVnMT0iyxHoRWzzEBrr4MjIsw-JtFIrd0KEdNLER2BOKjhWYrauXibG0X/exec";
-const COLLEGE_GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwYuEB4POxUvuyGKMMDOSFzTtzVqhMVL4mjEx8uchatzoi0Hpg4jbI_naepXFA8_RHm/exec";
+const COLLEGE_GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxVgIu8YabG_DEr6DxpSeV-R0fcrHf-3WGr3Ir0vaFU4JtBpr7pPSqr1JMiG9D0q7la/exec";
 const SECTION_PHOTOS = [
   "1. MRS. JAMUNA RANI BISWAS.jpg",
   "2. MD. TAUFIQUL ALAM.jpg",
@@ -354,23 +354,54 @@ function buildForm(){
   html += `<section class="section">
     <div class="section-title college-section-title"></div>`;
   COLLEGE_RATING_QUESTIONS.forEach(question => {
-    html += `<div class="question">
-      <div class="qtext">${question.number}. ${question.text}</div>
-      <div class="options">`;
-    OPTIONS.forEach(option => {
-      html += `<label class="option">
-        <input type="radio" name="college-${question.key}" value="${option}" required onchange="toggleCollegeComment('${question.key}', this.value)"> ${OPTION_EMOJIS[option]} ${option}
-      </label>`;
-    });
-    html += `</div>
-      <div id="college-${question.key}-comment-wrap" class="comment-wrap">
-        <textarea id="college-${question.key}-comment" class="comment" placeholder="Please explain your rating..." required></textarea>
-      </div>
-    </div>`;
     if(question.number === 1){
       html += `<div class="question">
-        <label class="qtext" for="collegeMissionDescription">2. Is Barishal Cadet College directed towards a well-defined mission or purpose? From your perspective, describe that objective in one or more sentences.</label>
+        <div class="qtext">${question.number}. ${question.text}</div>
+        <div class="options">`;
+      OPTIONS.forEach(option => {
+        html += `<label class="option">
+          <input type="radio" name="college-${question.key}" value="${option}" required onchange="toggleCollegeComment('${question.key}', this.value)"> ${OPTION_EMOJIS[option]} ${option}
+        </label>`;
+      });
+      html += `</div>
+        <div id="college-${question.key}-comment-wrap" class="comment-wrap">
+          <textarea id="college-${question.key}-comment" class="comment" placeholder="Please explain your rating..." required></textarea>
+        </div>
+      </div>`;
+    }
+    if(question.number === 4){
+      html += `<div class="question">
+        <div class="qtext">2. Does Barishal Cadet College have any specific goal or objective?</div>
+        <div class="options">
+          <label class="option">
+            <input type="radio" name="collegeGoalObjective" value="Yes" required> ✅ Yes
+          </label>
+          <label class="option">
+            <input type="radio" name="collegeGoalObjective" value="No" required> ❌ No
+          </label>
+          <label class="option">
+            <input type="radio" name="collegeGoalObjective" value="Others" required> 📝 Others
+          </label>
+        </div>
+      </div>
+      <div class="question">
+        <label class="qtext" for="collegeMissionDescription">3. Is Barishal Cadet College directed towards a well-defined mission or purpose? From your perspective, describe that objective in one or more sentences.</label>
         <textarea id="collegeMissionDescription" class="college-answer" maxlength="5000" required></textarea>
+      </div>`;
+    }
+    if(question.number >= 4){
+      html += `<div class="question">
+        <div class="qtext">${question.number}. ${question.text}</div>
+        <div class="options">`;
+      OPTIONS.forEach(option => {
+        html += `<label class="option">
+          <input type="radio" name="college-${question.key}" value="${option}" required onchange="toggleCollegeComment('${question.key}', this.value)"> ${OPTION_EMOJIS[option]} ${option}
+        </label>`;
+      });
+      html += `</div>
+        <div id="college-${question.key}-comment-wrap" class="comment-wrap">
+          <textarea id="college-${question.key}-comment" class="comment" placeholder="Please explain your rating..." required></textarea>
+        </div>
       </div>`;
     }
   });
@@ -497,6 +528,7 @@ async function saveToGoogleSheet(){
           question.key,
           document.getElementById(`college-${question.key}-comment`).value.trim()
         ])),
+        specificGoalObjective: document.querySelector('input[name="collegeGoalObjective"]:checked')?.value || "",
         missionDescription: document.getElementById("collegeMissionDescription").value.trim()
       } : undefined
     };
@@ -666,9 +698,15 @@ function currentSectionComplete(){
         return false;
       }
     }
+    const goalObjective = document.querySelector('input[name="collegeGoalObjective"]:checked');
+    if(!goalObjective){
+      alert("Please answer Question 2 before submitting.");
+      document.querySelector('input[name="collegeGoalObjective"]').focus();
+      return false;
+    }
     const missionDescription = document.getElementById("collegeMissionDescription");
     if(!missionDescription.value.trim()){
-      alert("Please answer Question 2 before submitting.");
+      alert("Please answer Question 3 before submitting.");
       missionDescription.focus();
       return false;
     }

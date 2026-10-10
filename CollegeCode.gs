@@ -22,6 +22,9 @@ const COLLEGE_RATING_FIELDS = [
   {key: "vicePrincipalViewRating", header: "Your view about The Vice-Principal"},
   {key: "principalViewRating", header: "Your view about The Principal"}
 ];
+const COLLEGE_EXTRA_FIELDS = [
+  {key: "specificGoalObjective", header: "Specific Goal or Objective"}
+];
 
 function setupCollegeEvaluationSheet() {
   const spreadsheet = SpreadsheetApp.openById(COLLEGE_SPREADSHEET_ID);
@@ -94,6 +97,7 @@ function collegeSaveSubmission(spreadsheet, submission) {
       submission.answers.ratings[field.key],
       collegeSafeCellText(submission.answers.comments[field.key])
     ]),
+    ...COLLEGE_EXTRA_FIELDS.map(field => collegeSafeCellText(submission.answers[field.key])),
     collegeSafeCellText(submission.answers.missionDescription)
   ];
   sheet.getRange(rowNumber, 2, 1, row.length).setValues([row]);
@@ -140,6 +144,7 @@ function collegeBuildHeaders() {
     "Cadet Number"
   ];
   COLLEGE_RATING_FIELDS.forEach(field => headers.push(field.header, `${field.header} Comment`));
+  COLLEGE_EXTRA_FIELDS.forEach(field => headers.push(field.header));
   headers.push("College Mission or Purpose");
   return headers;
 }
@@ -153,6 +158,15 @@ function collegeMigrateOrValidateHeaders(sheet, headers) {
   const oldHeaders = sheet.getRange(4, 2, 1, oldColumnCount).getValues()[0];
   while (oldHeaders.length && oldHeaders[oldHeaders.length - 1] === "") {
     oldHeaders.pop();
+  }
+  if (oldHeaders.length < headers.length) {
+    const missingHeaders = headers.slice(oldHeaders.length);
+    sheet.getRange(4, oldHeaders.length + 2, 1, missingHeaders.length).setValues([missingHeaders]);
+    const lastRow = sheet.getLastRow();
+    if (lastRow > 4) {
+      sheet.getRange(5, oldHeaders.length + 2, lastRow - 4, missingHeaders.length).setValue("");
+    }
+    return;
   }
   if (headers.every((header, index) => oldHeaders[index] === header)) {
     return;
@@ -248,9 +262,15 @@ function collegeValidateAnswers(answers) {
     comments[field.key] = comment.trim();
   });
 
+  const specificGoalObjective = answers.specificGoalObjective;
+  if (!['Yes', 'No', 'Others'].includes(specificGoalObjective)) {
+    throw new Error("Invalid or missing Specific Goal or Objective answer.");
+  }
+
   return {
     ratings: ratings,
     comments: comments,
+    specificGoalObjective: specificGoalObjective,
     missionDescription: answers.missionDescription.trim()
   };
 }
