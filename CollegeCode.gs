@@ -159,76 +159,62 @@ function collegeMigrateOrValidateHeaders(sheet, headers) {
   while (oldHeaders.length && oldHeaders[oldHeaders.length - 1] === "") {
     oldHeaders.pop();
   }
-  if (oldHeaders.length < headers.length) {
-    const missingHeaders = headers.slice(oldHeaders.length);
-    sheet.getRange(4, oldHeaders.length + 2, 1, missingHeaders.length).setValues([missingHeaders]);
-    const lastRow = sheet.getLastRow();
-    if (lastRow > 4) {
-      sheet.getRange(5, oldHeaders.length + 2, lastRow - 4, missingHeaders.length).setValue("");
-    }
-    return;
-  }
-  if (headers.every((header, index) => oldHeaders[index] === header)) {
+  if (oldHeaders.length === headers.length
+    && headers.every((header, index) => oldHeaders[index] === header)) {
     return;
   }
 
   const basicHeaders = ["No", "Submit on", "Class", "House", "Form", "Cadet Name", "Cadet Number"];
   const hasBasicHeaders = basicHeaders.every((header, index) => oldHeaders[index] === header);
-  const missionIndex = oldHeaders.indexOf("College Mission or Purpose");
-  const knownRatingHeaders = new Set([
-    ...COLLEGE_RATING_FIELDS.map(field => field.header),
-    "College Environment Rating",
-    "Education Development Measures Rating",
-    "Cadet Dining and Food Quality Rating",
-    "House Environment Rating",
-    "Form Master Sincerity Rating",
-    "House Master Sincerity and Dedication Rating",
-    "Hospital Facilities and Environment Rating",
-    "College Adjutant Sincerity Rating"
-  ]);
-  const ratingHeadersAreValid = oldHeaders
-    .slice(basicHeaders.length, missionIndex < 0 ? oldHeaders.length : missionIndex)
-    .every((header, index, ratingHeaders) => {
-      if (header === "") {
-        return true;
-      }
-      if (knownRatingHeaders.has(header)) {
-        return true;
-      }
-      return header.endsWith(" Comment")
-        && knownRatingHeaders.has(header.slice(0, -" Comment".length));
-    });
-
-  if (!hasBasicHeaders
-    || missionIndex !== oldHeaders.length - 1
-    || !ratingHeadersAreValid) {
-    throw new Error("The existing College Evaluation sheet has incompatible headers.");
-  }
-
-  const lastRow = sheet.getLastRow();
-  const oldRows = sheet.getRange(4, 2, lastRow - 3, oldColumnCount).getValues();
-  const headerIndexes = new Map(oldHeaders.map((header, index) => [header, index]));
+  const knownHeaders = new Set(headers);
   const legacyHeaderByNewHeader = {
     "Your view about The Adjutant": "College Adjutant Sincerity Rating"
   };
-  const migratedRows = oldRows.slice(1).map(oldRow => {
-    const row = oldRow.slice(0, basicHeaders.length);
-    COLLEGE_RATING_FIELDS.forEach(field => {
-      const legacyHeader = legacyHeaderByNewHeader[field.header] || field.header;
-      const ratingIndex = headerIndexes.has(field.header)
-        ? headerIndexes.get(field.header)
-        : headerIndexes.get(legacyHeader);
-      const commentIndex = ratingIndex === undefined
-        ? undefined
-        : headerIndexes.get(`${oldHeaders[ratingIndex]} Comment`);
-      row.push(
-        ratingIndex === undefined ? "" : oldRow[ratingIndex],
-        commentIndex === undefined ? "" : oldRow[commentIndex]
-      );
-    });
-    row.push(oldRow[missionIndex]);
-    return row;
+  Object.values(legacyHeaderByNewHeader).forEach(header => {
+    knownHeaders.add(header);
+    knownHeaders.add(`${header} Comment`);
   });
+  const responseHeadersAreValid = oldHeaders
+    .slice(basicHeaders.length)
+    .every(header => knownHeaders.has(header));
+  const basicHeadersAreUnique = new Set(oldHeaders.slice(0, basicHeaders.length)).size
+    === basicHeaders.length;
+
+  if (!hasBasicHeaders || !basicHeadersAreUnique || !responseHeadersAreValid) {
+    throw new Error(
+      `The existing College Evaluation sheet has incompatible headers. Found: ${JSON.stringify(oldHeaders)}`
+    );
+  }
+
+  const lastRow = sheet.getLastRow();
+  const oldRows = lastRow > 4
+    ? sheet.getRange(5, 2, lastRow - 4, oldColumnCount).getValues()
+    : [];
+  const sourceHeaderByTarget = new Map();
+  Object.keys(legacyHeaderByNewHeader).forEach(targetHeader => {
+    sourceHeaderByTarget.set(targetHeader, legacyHeaderByNewHeader[targetHeader]);
+    sourceHeaderByTarget.set(`${targetHeader} Comment`, `${legacyHeaderByNewHeader[targetHeader]} Comment`);
+  });
+  const migratedRows = oldRows.map(oldRow => headers.map((header, index) => {
+    if (index < basicHeaders.length) {
+      return oldRow[index];
+    }
+    const legacyHeader = sourceHeaderByTarget.get(header);
+    const sourceIndexes = [];
+    oldHeaders.forEach((oldHeader, oldIndex) => {
+      if (oldHeader === header || (legacyHeader && oldHeader === legacyHeader)) {
+        sourceIndexes.push(oldIndex);
+      }
+    });
+    for (const sourceIndex of sourceIndexes) {
+      const value = oldRow[sourceIndex];
+      if (value !== "" && value !== null) {
+        return value;
+      }
+    }
+    return "";
+  }));
+
   sheet.getRange(4, 2, 1, headers.length).setValues([headers]);
   if (migratedRows.length) {
     sheet.getRange(5, 2, migratedRows.length, headers.length).setValues(migratedRows);
@@ -262,8 +248,10 @@ function collegeValidateAnswers(answers) {
     comments[field.key] = comment.trim();
   });
 
-  const specificGoalObjective = answers.specificGoalObjective;
-  if (!['Yes', 'No', 'Others'].includes(specificGoalObjective)) {
+  const specificGoalObjective = typeof answers.specificGoalObjective === "string"
+    ? answers.specificGoalObjective.trim()
+    : "";
+  if (!["Yes", "No", "Others"].includes(specificGoalObjective)) {
     throw new Error("Invalid or missing Specific Goal or Objective answer.");
   }
 
