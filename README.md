@@ -17,4 +17,4 @@ Older rows in the previous `Responses` tab are not moved or deleted. They can be
 
 The public web app URL is not authentication. Anyone who obtains it can submit rows to the spreadsheet as the deploying account, potentially causing unwanted submissions or using your Apps Script quota. Share the form and endpoint carefully, monitor the sheet, and disable or redeploy the web app if it is abused. An anonymous endpoint cannot provide the protections of user sign-in.
 
-The form reads the JSON result returned by each Apps Script web app and shows the thank-you page only when the server confirms the save. If a submission fails, check the corresponding Apps Script execution log and verify the target worksheet.
+The form reads the JSON result returned by each Apps Script web app and shows the thank-you page only when the server confirms the save. College Evaluation accepts `Not sure` for the mission-or-purpose question. After changing `CollegeCode.gs`, deploy a new version of the College Apps Script web app before testing the live form. If a submission fails, check the corresponding Apps Script execution log and verify the target worksheet.
