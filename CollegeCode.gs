@@ -251,7 +251,7 @@ function collegeValidateAnswers(answers) {
   const specificGoalObjective = typeof answers.specificGoalObjective === "string"
     ? answers.specificGoalObjective.trim()
     : "";
-  if (!["Yes", "No", "Others", "Not sure"].includes(specificGoalObjective)) {
+  if (!["Yes", "No", "Not sure"].includes(specificGoalObjective)) {
     throw new Error("Invalid or missing Specific Goal or Objective answer.");
   }
 
